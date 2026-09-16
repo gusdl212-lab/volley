@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>KOKO Volley v3.0</title>
+<title>KOKO Volley v3.1 Classic Physics</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;background:#07182d;color:#fff;font-family:Pretendard,"Noto Sans KR",system-ui,sans-serif}body{min-height:100vh}button{font:inherit}
 #app{max-width:1420px;margin:auto;padding:14px}.screen{display:none}.screen.active{display:block}
@@ -42,7 +42,7 @@ const spriteImg={}; Object.entries(SPRITES).forEach(([k,v])=>{const im=new Image
 const c=document.querySelector('#c'),g=c.getContext('2d'),W=c.width,H=c.height,G=570,NX=W/2,NT=350;
 let mode='ai',keys=new Set(),score=[0,0],serve=0,pause=24,over=false,trail=[],fx=[],shake=0,goalTimer=0,goalWinner=-1;
 const TICK_MS=1000/30; // 클래식 게임처럼 물리 속도를 모니터 주사율과 분리
-const MOVE=6,JUMP=-16,GRAV=1,DIVE_X=8,DIVE_Y=-5,NORMAL_BOUNCE=15;
+const MOVE=6,JUMP=-16,GRAV=1,DIVE_X=8,DIVE_Y=-5,NORMAL_BOUNCE=15; // classic-scale fixed-step values
 function mk(x,s){return{x,y:G-86,vx:0,vy:0,w:82,h:86,s,on:1,face:s?-1:1,state:0,atkFrame:0,attackInput:null,diveDir:0,lieTicks:0,attackHeld:false}}
 let P=[mk(220,0),mk(880,1)];
 function mb(){return{x:serve?820:280,y:155,vx:serve?-3:3,vy:1,r:46,pow:0,spin:0,lastHit:-1}}
@@ -61,7 +61,7 @@ function applyInput(p,inp){
    else if(p.state===0&&inp.x!==0){p.state=3;p.diveDir=inp.x;p.face=inp.x;p.vx=inp.x*DIVE_X;p.vy=DIVE_Y;p.on=0;}
  }
  p.attackHeld=inp.hit;
- if(p.state===2){p.atkFrame++;if(p.atkFrame>15){p.state=1;p.atkFrame=0;p.attackInput=null}}
+ if(p.state===2){p.atkFrame++;if(p.atkFrame>8){p.state=1;p.atkFrame=0;p.attackInput=null}}
 }
 function predictLanding(ball){
  let x=ball.x,y=ball.y,vx=ball.vx,vy=ball.vy;
@@ -119,12 +119,21 @@ function hit(p,idx){
  if(dx*dx/(rx*rx)+dy*dy/(ry*ry)>=1)return;
  if(B.lastHit===idx)return;
  // 일반 접촉: 중심에서 멀리 맞을수록 수평 속도가 커지고 최소 높이로 강하게 튐
- B.vx=dx<0?-Math.floor(Math.abs(dx)/7):Math.floor(Math.abs(dx)/7);
- if(B.vx===0)B.vx=[-1,0,1][Math.floor(Math.random()*3)];
+ B.vx=Math.max(-10,Math.min(10,Math.trunc(dx/6)));
+ if(B.vx===0)B.vx=(p.face||1);
  B.vy=-Math.max(NORMAL_BOUNCE,Math.abs(B.vy));B.pow=0;
  if(attacking&&p.attackInput){
-   const a=p.attackInput;B.vx=(Math.abs(a.x)+1)*10*(B.x<NX?1:-1);
-   B.vy=Math.abs(B.vy)*a.y*2;B.pow=24;shake=10;burst(B.x,B.y,p.s?'#ff573d':'#62d8ff');
+   const a=p.attackInput;
+   const side=(B.x<NX?1:-1);
+   // Direction is captured at attack key-down and never re-read at contact.
+   // 8-way response: neutral / horizontal / up / down / diagonals.
+   if(a.x===0&&a.y===0){ B.vx=side*10; B.vy=-15; }
+   else if(a.x===0&&a.y<0){ B.vx=side*3; B.vy=-20; }
+   else if(a.x===0&&a.y>0){ B.vx=side*3; B.vy=18; }
+   else if(a.y===0){ B.vx=side*20; B.vy=-2; }
+   else if(a.y<0){ B.vx=side*16; B.vy=-16; }
+   else { B.vx=side*17; B.vy=15; }
+   B.pow=24;shake=10;burst(B.x,B.y,p.s?'#ff573d':'#62d8ff');
  }
  if(diving)B.vx+=p.diveDir*1.5;
  const len=Math.hypot(dx,dy)||1;B.x=cx+dx/len*(bodyRx+B.r+2);B.y=cy+dy/len*(bodyRy+B.r+2);B.lastHit=idx;
@@ -138,7 +147,7 @@ function upB(){
  if(B.x+B.r>NX-10&&B.x-B.r<NX+10&&B.y+B.r>NT){
    if(B.y<NT&&B.vy>0){B.y=NT-B.r;B.vy=-Math.abs(B.vy)}else if(B.x<NX){B.x=NX-10-B.r;B.vx=-Math.abs(B.vx)}else{B.x=NX+10+B.r;B.vx=Math.abs(B.vx)}B.lastHit=-1;
  }
- if(Math.abs(B.x-P[0].x)>150&&Math.abs(B.x-P[1].x)>150)B.lastHit=-1;
+ if(Math.abs(B.x-P[0].x)>105&&Math.abs(B.x-P[1].x)>105)B.lastHit=-1;
  hit(P[0],0);hit(P[1],1);
  if(B.y+B.r>=G)point(B.x<NX?1:0)
 }
@@ -162,4 +171,7 @@ let last=performance.now(),acc=0;
 function loop(now){acc+=Math.min(100,now-last);last=now;while(acc>=TICK_MS){physicsTick();acc-=TICK_MS}draw();requestAnimationFrame(loop)}
 document.addEventListener('keydown',e=>{if(document.activeElement!==c)return;if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter','KeyA','KeyD','KeyW','KeyS','Space'].includes(e.code)){e.preventDefault();keys.add(e.code)}});document.addEventListener('keyup',e=>keys.delete(e.code));c.addEventListener('pointerdown',()=>c.focus());document.querySelector('#ai').onclick=()=>{mode='ai';reset()};document.querySelector('#pvp').onclick=()=>{mode='pvp';reset()};document.querySelector('#reset').onclick=()=>reset();reset();requestAnimationFrame(loop);
 
+</script>
+<script>
+console.info("KOKO Volley v3.1 Classic Physics — uploaded v3.0 visuals preserved");
 </script></body></html>
