@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>KOKO Volley v3.1 Classic Physics</title>
+<title>KOKO Volley v3.2</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;background:#07182d;color:#fff;font-family:Pretendard,"Noto Sans KR",system-ui,sans-serif}body{min-height:100vh}button{font:inherit}
 #app{max-width:1420px;margin:auto;padding:14px}.screen{display:none}.screen.active{display:block}
@@ -14,8 +14,8 @@
 .gameTop{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}.gameTop button{padding:10px 14px;border:1px solid #ffffff33;border-radius:11px;background:#142a47;color:#fff;font-weight:900;cursor:pointer}#back{margin-right:auto;background:#263c59}.hint{font-size:13px;opacity:.82}.wrap{position:relative;border-radius:20px;overflow:hidden;background:#178ee8;box-shadow:0 14px 44px #0007;border:2px solid #ffffff22}canvas{display:block;width:100%;height:auto;outline:none}canvas:focus{box-shadow:inset 0 0 0 3px #7be7ff}.note{margin-top:10px;padding:11px 13px;border-radius:12px;background:#0e223c;font-size:13px;opacity:.9}
 @media(max-width:700px){#app{padding:6px}.hero{aspect-ratio:3/4;min-height:680px;background-size:cover;background-position:center top}.menu{width:82%;top:56%}.menu button{min-height:56px;font-size:17px}.subrow button{font-size:12px}}
 </style></head><body><main id="app">
-<section id="home" class="screen active"><div class="hero"><div class="menu"><button id="startAI" class="solo">⚡ 1P vs AI</button><button id="start2P" class="local">👥 2P 대전</button><button id="startOnline" class="online">🌐 온라인 대전</button><div class="subrow"><button id="records">▥ 전적 보기</button><button id="skins">♟ 스킨 선택</button></div></div><div id="toast" class="toast"></div><div class="version">v3.0 CLASSIC ENGINE</div></div></section>
-<section id="game" class="screen"><div class="gameTop"><button id="back">← 메인 메뉴</button><button id="ai">1P vs AI</button><button id="pvp">2P 로컬</button><button id="reset">다시 시작</button><span class="hint">1P: ← → / ↑ / Enter 공격 · 2P: A D / W / Space 공격</span></div><div class="wrap"><canvas id="c" width="1100" height="650" tabindex="0"></canvas></div><div class="note">v3.0은 고정 30Hz 물리 틱을 사용합니다. 점프·다이빙·착지 경직·일반 리시브·방향별 파워히트·예상 낙하지점 기반 AI를 클래식 피카츄배구의 동작 특성에 맞춰 다시 구성했습니다.</div></section>
+<section id="home" class="screen active"><div class="hero"><div class="menu"><button id="startAI" class="solo">⚡ 1P vs AI</button><button id="start2P" class="local">👥 2P 대전</button><button id="startOnline" class="online">🌐 온라인 대전</button><div class="subrow"><button id="records">▥ 전적 보기</button><button id="skins">♟ 스킨 선택</button></div></div><div id="toast" class="toast"></div><div class="version">v3.2 CLASSIC ENGINE</div></div></section>
+<section id="game" class="screen"><div class="gameTop"><button id="back">← 메인 메뉴</button><button id="ai">1P vs AI</button><button id="pvp">2P 로컬</button><button id="reset">다시 시작</button><span class="hint">1P: ← → / ↑ / Enter 공격 · 2P: A D / W / Space 공격</span></div><div class="wrap"><canvas id="c" width="1100" height="650" tabindex="0"></canvas></div><div class="note">v3.2은 고정 30Hz 물리 틱을 사용합니다. 점프·다이빙·착지 경직·일반 리시브·방향별 파워히트·예상 낙하지점 기반 AI를 클래식 피카츄배구의 동작 특성에 맞춰 다시 구성했습니다.</div></section>
 </main><script>
 const home=document.querySelector('#home'),gameScreen=document.querySelector('#game'),toast=document.querySelector('#toast');
 function showGame(kind){home.classList.remove('active');gameScreen.classList.add('active');setTimeout(()=>{(kind==='ai'?document.querySelector('#ai'):document.querySelector('#pvp')).click();document.querySelector('#c').focus()},50)}
@@ -42,7 +42,7 @@ const spriteImg={}; Object.entries(SPRITES).forEach(([k,v])=>{const im=new Image
 const c=document.querySelector('#c'),g=c.getContext('2d'),W=c.width,H=c.height,G=570,NX=W/2,NT=350;
 let mode='ai',keys=new Set(),score=[0,0],serve=0,pause=24,over=false,trail=[],fx=[],shake=0,goalTimer=0,goalWinner=-1;
 const TICK_MS=1000/30; // 클래식 게임처럼 물리 속도를 모니터 주사율과 분리
-const MOVE=6,JUMP=-16,GRAV=1,DIVE_X=8,DIVE_Y=-5,NORMAL_BOUNCE=15; // classic-scale fixed-step values
+const MOVE=6,JUMP=-16,GRAV=1,DIVE_X=8,DIVE_Y=-5,NORMAL_BOUNCE=15;
 function mk(x,s){return{x,y:G-86,vx:0,vy:0,w:82,h:86,s,on:1,face:s?-1:1,state:0,atkFrame:0,attackInput:null,diveDir:0,lieTicks:0,attackHeld:false}}
 let P=[mk(220,0),mk(880,1)];
 function mb(){return{x:serve?820:280,y:155,vx:serve?-3:3,vy:1,r:46,pow:0,spin:0,lastHit:-1}}
@@ -123,16 +123,13 @@ function hit(p,idx){
  if(B.vx===0)B.vx=(p.face||1);
  B.vy=-Math.max(NORMAL_BOUNCE,Math.abs(B.vy));B.pow=0;
  if(attacking&&p.attackInput){
-   const a=p.attackInput;
-   const side=(B.x<NX?1:-1);
-   // Direction is captured at attack key-down and never re-read at contact.
-   // 8-way response: neutral / horizontal / up / down / diagonals.
-   if(a.x===0&&a.y===0){ B.vx=side*10; B.vy=-15; }
-   else if(a.x===0&&a.y<0){ B.vx=side*3; B.vy=-20; }
-   else if(a.x===0&&a.y>0){ B.vx=side*3; B.vy=18; }
-   else if(a.y===0){ B.vx=side*20; B.vy=-2; }
-   else if(a.y<0){ B.vx=side*16; B.vy=-16; }
-   else { B.vx=side*17; B.vy=15; }
+   const a=p.attackInput, side=(B.x<NX?1:-1);
+   if(a.x===0&&a.y===0){B.vx=side*10;B.vy=-15}
+   else if(a.x===0&&a.y<0){B.vx=side*3;B.vy=-20}
+   else if(a.x===0&&a.y>0){B.vx=side*3;B.vy=18}
+   else if(a.y===0){B.vx=side*20;B.vy=-2}
+   else if(a.y<0){B.vx=side*16;B.vy=-16}
+   else {B.vx=side*17;B.vy=15}
    B.pow=24;shake=10;burst(B.x,B.y,p.s?'#ff573d':'#62d8ff');
  }
  if(diving)B.vx+=p.diveDir*1.5;
@@ -171,7 +168,4 @@ let last=performance.now(),acc=0;
 function loop(now){acc+=Math.min(100,now-last);last=now;while(acc>=TICK_MS){physicsTick();acc-=TICK_MS}draw();requestAnimationFrame(loop)}
 document.addEventListener('keydown',e=>{if(document.activeElement!==c)return;if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter','KeyA','KeyD','KeyW','KeyS','Space'].includes(e.code)){e.preventDefault();keys.add(e.code)}});document.addEventListener('keyup',e=>keys.delete(e.code));c.addEventListener('pointerdown',()=>c.focus());document.querySelector('#ai').onclick=()=>{mode='ai';reset()};document.querySelector('#pvp').onclick=()=>{mode='pvp';reset()};document.querySelector('#reset').onclick=()=>reset();reset();requestAnimationFrame(loop);
 
-</script>
-<script>
-console.info("KOKO Volley v3.1 Classic Physics — uploaded v3.0 visuals preserved");
 </script></body></html>
