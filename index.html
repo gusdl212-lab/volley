@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>KOKO Volley v2.0</title>
+<title>KOKO Volley v3.0</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;background:#07182d;color:#fff;font-family:Pretendard,"Noto Sans KR",system-ui,sans-serif}body{min-height:100vh}button{font:inherit}
 #app{max-width:1420px;margin:auto;padding:14px}.screen{display:none}.screen.active{display:block}
@@ -14,8 +14,8 @@
 .gameTop{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}.gameTop button{padding:10px 14px;border:1px solid #ffffff33;border-radius:11px;background:#142a47;color:#fff;font-weight:900;cursor:pointer}#back{margin-right:auto;background:#263c59}.hint{font-size:13px;opacity:.82}.wrap{position:relative;border-radius:20px;overflow:hidden;background:#178ee8;box-shadow:0 14px 44px #0007;border:2px solid #ffffff22}canvas{display:block;width:100%;height:auto;outline:none}canvas:focus{box-shadow:inset 0 0 0 3px #7be7ff}.note{margin-top:10px;padding:11px 13px;border-radius:12px;background:#0e223c;font-size:13px;opacity:.9}
 @media(max-width:700px){#app{padding:6px}.hero{aspect-ratio:3/4;min-height:680px;background-size:cover;background-position:center top}.menu{width:82%;top:56%}.menu button{min-height:56px;font-size:17px}.subrow button{font-size:12px}}
 </style></head><body><main id="app">
-<section id="home" class="screen active"><div class="hero"><div class="menu"><button id="startAI" class="solo">⚡ 1P vs AI</button><button id="start2P" class="local">👥 2P 대전</button><button id="startOnline" class="online">🌐 온라인 대전</button><div class="subrow"><button id="records">▥ 전적 보기</button><button id="skins">♟ 스킨 선택</button></div></div><div id="toast" class="toast"></div><div class="version">v2.0</div></div></section>
-<section id="game" class="screen"><div class="gameTop"><button id="back">← 메인 메뉴</button><button id="ai">1P vs AI</button><button id="pvp">2P 로컬</button><button id="reset">다시 시작</button><span class="hint">1P: ← → / ↑ / Enter 공격 · 2P: A D / W / Space 공격</span></div><div class="wrap"><canvas id="c" width="1100" height="650" tabindex="0"></canvas></div><div class="note">강공격 시 공이 압축되고 속도가 크게 증가하며 잔상·타격 이펙트가 발생합니다. 캐릭터를 대기·달리기·점프·공중·스파이크 상태별 스프라이트로 교체했습니다. 강타 공은 압축 변형·회전·불꽃/전기 잔상이 적용됩니다. 다음 단계는 온라인 방 대전입니다.</div></section>
+<section id="home" class="screen active"><div class="hero"><div class="menu"><button id="startAI" class="solo">⚡ 1P vs AI</button><button id="start2P" class="local">👥 2P 대전</button><button id="startOnline" class="online">🌐 온라인 대전</button><div class="subrow"><button id="records">▥ 전적 보기</button><button id="skins">♟ 스킨 선택</button></div></div><div id="toast" class="toast"></div><div class="version">v3.0 CLASSIC ENGINE</div></div></section>
+<section id="game" class="screen"><div class="gameTop"><button id="back">← 메인 메뉴</button><button id="ai">1P vs AI</button><button id="pvp">2P 로컬</button><button id="reset">다시 시작</button><span class="hint">1P: ← → / ↑ / Enter 공격 · 2P: A D / W / Space 공격</span></div><div class="wrap"><canvas id="c" width="1100" height="650" tabindex="0"></canvas></div><div class="note">v3.0은 고정 30Hz 물리 틱을 사용합니다. 점프·다이빙·착지 경직·일반 리시브·방향별 파워히트·예상 낙하지점 기반 AI를 클래식 피카츄배구의 동작 특성에 맞춰 다시 구성했습니다.</div></section>
 </main><script>
 const home=document.querySelector('#home'),gameScreen=document.querySelector('#game'),toast=document.querySelector('#toast');
 function showGame(kind){home.classList.remove('active');gameScreen.classList.add('active');setTimeout(()=>{(kind==='ai'?document.querySelector('#ai'):document.querySelector('#pvp')).click();document.querySelector('#c').focus()},50)}
@@ -39,116 +39,127 @@ const SPRITES = {
 };
 const spriteImg={}; Object.entries(SPRITES).forEach(([k,v])=>{const im=new Image();im.src=v;spriteImg[k]=im});
 
-const c=document.querySelector('#c'),g=c.getContext('2d'),W=c.width,H=c.height,G=570,NX=W/2,NT=350;let mode='ai',keys=new Set(),score=[0,0],serve=0,pause=45,over=false,trail=[],fx=[],shake=0,goalTimer=0,goalWinner=-1,slowTick=0;
-function mk(x,s){return{x,y:G-86,vx:0,vy:0,w:82,h:86,s,on:1,face:s?-1:1,atk:0,lock:0,dive:0,recover:0,wasAir:0,atkDir:0,atkV:0,atkConsumed:false}}let P=[mk(220,0),mk(880,1)];function mb(){return{x:serve?820:280,y:155,vx:serve?-2.75:2.75,vy:-1.5,r:46,pow:0,spin:0}}let B=mb();
-function reset(all=true){if(all){score=[0,0];serve=0;over=false}P=[mk(220,0),mk(880,1)];B=mb();pause=45;goalTimer=0;goalWinner=-1;slowTick=0;trail=[];fx=[];c.focus()}
-function point(w){if(goalTimer>0)return;score[w]++;serve=w;goalWinner=w;goalTimer=120;slowTick=0;B.y=G-B.r;B.vy=-Math.max(1.4,Math.abs(B.vy)*.16);B.vx*=.18;shake=4;burst(B.x,B.y,w?'#ff694d':'#7ee8ff');if(score[w]>=15&&Math.abs(score[0]-score[1])>=2)over='pending'}
+const c=document.querySelector('#c'),g=c.getContext('2d'),W=c.width,H=c.height,G=570,NX=W/2,NT=350;
+let mode='ai',keys=new Set(),score=[0,0],serve=0,pause=24,over=false,trail=[],fx=[],shake=0,goalTimer=0,goalWinner=-1;
+const TICK_MS=1000/30; // 클래식 게임처럼 물리 속도를 모니터 주사율과 분리
+const MOVE=6,JUMP=-16,GRAV=1,DIVE_X=8,DIVE_Y=-5,NORMAL_BOUNCE=15;
+function mk(x,s){return{x,y:G-86,vx:0,vy:0,w:82,h:86,s,on:1,face:s?-1:1,state:0,atkFrame:0,attackInput:null,diveDir:0,lieTicks:0,attackHeld:false}}
+let P=[mk(220,0),mk(880,1)];
+function mb(){return{x:serve?820:280,y:155,vx:serve?-3:3,vy:1,r:46,pow:0,spin:0,lastHit:-1}}
+let B=mb();
+function reset(all=true){if(all){score=[0,0];serve=0;over=false}P=[mk(220,0),mk(880,1)];B=mb();pause=24;goalTimer=0;goalWinner=-1;trail=[];fx=[];c.focus()}
+function point(w){if(goalTimer>0)return;score[w]++;serve=w;goalWinner=w;goalTimer=60;B.y=G-B.r;B.vy=-Math.max(1.2,Math.abs(B.vy)*.12);B.vx*=.12;shake=4;burst(B.x,B.y,w?'#ff694d':'#7ee8ff');if(score[w]>=15&&Math.abs(score[0]-score[1])>=2)over='pending'}
 function finishPoint(){const ended=over==='pending';goalTimer=0;goalWinner=-1;if(ended){over=true;return}reset(false)}
-function ctrl(p,L,R,U,D,A){
-  const d=(keys.has(R)?1:0)-(keys.has(L)?1:0);
-  const v=(keys.has(D)?1:0)-(keys.has(U)?1:0);
-  if(p.recover>0){p.vx=0;p.recover--;return}
-  if(p.dive>0){p.dive--;return}
-  p.vx=d*6;if(d)p.face=d;
-  if(keys.has(U)&&p.on){p.vy=-16;p.on=0}
-  if(keys.has(A)&&!p.lock){
-    if(p.on&&d){/* 원작식: 지상에서 좌/우+공격 = 낮은 다이빙 */
-      p.face=d;p.vx=d*8;p.vy=-5;p.on=0;p.dive=30;p.atk=0;
-    }else if(!p.on){/* 공중에서만 파워히트. 누른 순간의 입력을 완전히 고정 */
-      p.atk=22;p.atkDir=d;p.atkV=v;p.atkConsumed=false;p.attackFacing=p.face;
-    }
-    p.lock=1;
-  }
-  if(!keys.has(A))p.lock=0;
+function readInput(L,R,U,D,A){return{x:(keys.has(R)?1:0)-(keys.has(L)?1:0),y:(keys.has(D)?1:0)-(keys.has(U)?1:0),hit:keys.has(A)}}
+function applyInput(p,inp){
+ if(p.lieTicks>0){p.vx=0;p.lieTicks--;if(p.lieTicks===0)p.state=0;return}
+ if(p.state===3){p.vx=p.diveDir*DIVE_X;return}
+ if(p.state===0||p.state===1){p.vx=inp.x*MOVE;if(inp.x)p.face=inp.x}
+ if(inp.y<0&&p.on&&p.state===0){p.vy=JUMP;p.on=0;p.state=1;p.atkFrame=0}
+ if(inp.hit&&!p.attackHeld){
+   if(p.state===1){p.state=2;p.atkFrame=0;p.attackInput={x:inp.x,y:inp.y};}
+   else if(p.state===0&&inp.x!==0){p.state=3;p.diveDir=inp.x;p.face=inp.x;p.vx=inp.x*DIVE_X;p.vy=DIVE_Y;p.on=0;}
+ }
+ p.attackHeld=inp.hit;
+ if(p.state===2){p.atkFrame++;if(p.atkFrame>15){p.state=1;p.atkFrame=0;p.attackInput=null}}
 }
-function cpu(p){let tx=B.x;if(B.x<NX&&B.vx<0)tx=880;let d=Math.sign(tx-p.x);if(Math.abs(tx-p.x)<18)d=0;p.vx=d*5;if(d)p.face=d;if(B.x>NX&&B.vy>0&&Math.abs(B.x-p.x)<140&&p.on){p.vy=-12.9;p.on=0}if(Math.abs(B.x-p.x)<100&&Math.abs(B.y-(p.y+30))<92&&!p.on&&p.atk<=0){p.atk=18;p.atkDir=(Math.random()<.65?1:0);p.atkV=(Math.random()<.55?1:(Math.random()<.5?0:-1));p.atkConsumed=false}}
+function predictLanding(ball){
+ let x=ball.x,y=ball.y,vx=ball.vx,vy=ball.vy;
+ for(let i=0;i<240;i++){
+   let nx=x+vx;
+   if(nx-ball.r<28||nx+ball.r>W-28)vx=-vx;
+   if(y+vy-ball.r<20)vy=1;
+   if(Math.abs(x-NX)<ball.r+10&&y+ball.r>NT){if(y<NT&&vy>0)vy=-vy;else vx=x<NX?-Math.abs(vx):Math.abs(vx)}
+   x+=vx;y+=vy;vy+=GRAV;
+   if(y+ball.r>=G)return x;
+ }
+ return x;
+}
+function chooseAISpike(p,opp){
+ // 여러 방향을 짧게 시뮬레이션해 상대와 가장 먼 낙하지점을 고름
+ let best={x:0,y:1,score:-1e9};
+ for(const xd of [0,1])for(const yd of [-1,0,1]){
+   let vx=(xd+1)*10*(p.s?-1:1),vy=Math.abs(B.vy)*yd*2;
+   let sim={x:B.x,y:B.y,vx,vy,r:B.r},land=predictLanding(sim);
+   let valid=p.s?land<NX:land>NX;
+   let sc=(valid?1000:-1000)+Math.abs(land-opp.x)+(yd===1?60:0);
+   if(sc>best.score)best={x:xd,y:yd,score:sc};
+ }
+ return best;
+}
+function cpuInput(p,opp){
+ let inp={x:0,y:0,hit:false},land=predictLanding(B),ownMin=p.s?NX+50:60,ownMax=p.s?W-60:NX-50;
+ let target=(land>ownMin&&land<ownMax)?land:(p.s?(NX+W)/2:NX/2);
+ if(Math.abs(target-p.x)>20)inp.x=Math.sign(target-p.x);
+ if(p.state===0&&B.vy>0&&B.x>ownMin&&B.x<ownMax){
+   const dx=Math.abs(B.x-p.x);
+   if(dx<72&&B.y>p.y-150&&B.y<p.y+20)inp.y=-1;
+   else if(B.y>390&&dx>115&&dx<270){inp.x=Math.sign(B.x-p.x);inp.hit=true}
+ }
+ if((p.state===1||p.state===2)&&Math.abs(B.x-p.x)<105&&Math.abs(B.y-(p.y+30))<110){
+   const a=chooseAISpike(p,opp);inp.x=a.x*(p.s?-1:1);inp.y=a.y;inp.hit=true;
+ }
+ return inp;
+}
 function upP(p){
-  const airborne=!p.on;
-  p.x+=p.vx;
-  p.vy+=1.0;
-  p.y+=p.vy;
-  if(p.y+p.h>=G){
-    p.y=G-p.h;p.vy=0;
-    if(airborne&&p.dive>0){p.recover=18;p.dive=0;p.vx=0}
-    p.on=1;
-  }
-  let lo=p.s?NX+45:65,hi=p.s?W-65:NX-45;p.x=Math.max(lo,Math.min(hi,p.x));
-  if(p.atk){p.atk--;if(p.atk===0){p.atkDir=0;p.atkV=0;p.atkConsumed=false}}
+ const wasAir=!p.on;
+ if(p.state===3)p.vx=p.diveDir*DIVE_X;
+ p.x+=p.vx;p.y+=p.vy;
+ if(!p.on)p.vy+=GRAV;
+ if(p.y+p.h>=G){p.y=G-p.h;p.vy=0;p.on=1;if(wasAir){if(p.state===3){p.state=4;p.lieTicks=3;p.vx=0}else if(p.state!==4){p.state=0;p.attackInput=null}}}
+ else p.on=0;
+ let lo=p.s?NX+45:65,hi=p.s?W-65:NX-45;p.x=Math.max(lo,Math.min(hi,p.x));
 }
 function burst(x,y,col){for(let i=0;i<22;i++){let a=Math.random()*Math.PI*2,s=2+Math.random()*8;fx.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,l:24,c:col})}}
-function hit(p){
+function hit(p,idx){
  const cx=p.x,cy=p.y+37,dx=B.x-cx,dy=B.y-cy;
- /* 원작의 넓은 사각 충돌감을 KOKO 캐릭터 비율에 맞춘 타원 히트박스로 재현 */
- const bodyRx=61+(p.atk>4?15:0)+(p.dive>0?30:0), bodyRy=58+(p.dive>0?10:0);
- const rx=bodyRx+B.r*.82, ry=bodyRy+B.r*.82;
- if(dx*dx/(rx*rx)+dy*dy/(ry*ry)<1){
-   if(p.atk>4&&p.atkConsumed)return;
-   const len=Math.hypot(dx,dy)||1;
-   if(p.atk>4){
-     /* 파워히트: 공격키를 누른 그 순간의 입력만 사용한다. 충돌 프레임 키 상태는 절대 재조회하지 않는다. */
-     const h=p.atkDir, v=p.atkV;
-     const towardOpponent=p.s?-1:1;
-     /* 원작 핵심: 수평은 항상 상대 코트 방향. 좌/우 입력 유무는 강도를 바꾸고, 상/하 입력은 수직 성분을 완전히 바꾼다. */
-     const horizontalPower=(Math.abs(h)+1)*7.0;
-     B.vx=towardOpponent*horizontalPower;
-     const incoming=Math.max(6.2,Math.abs(B.vy));
-     if(v<0) B.vy=-incoming*1.65;       /* ↑ + 공격: 위로 강하게, 천장 반사 가능 */
-     else if(v>0) B.vy=incoming*1.65;   /* ↓ + 공격: 아래로 강하게 꽂기 */
-     else B.vy=0;                       /* 공격만/좌우+공격: 수평 강타 */
-     B.pow=34;shake=11;burst(B.x,B.y,p.s?'#ff573d':'#62d8ff');p.atkConsumed=true;
-   }else{
-     /* 일반 리시브: 캐릭터 중앙에서 얼마나 옆에 맞았는지가 수평 반사량을 결정. 중앙은 높게, 끝은 옆으로. */
-     const offset=Math.max(-1,Math.min(1,dx/bodyRx));
-     B.vx=offset*6.2;
-     if(Math.abs(B.vx)<0.7)B.vx=(Math.random()-.5)*1.2;
-     B.vy=-Math.max(10.5,Math.abs(B.vy));
-     if(p.dive>0)B.vx+=p.face*2.0;
-     B.pow=0;
-   }
-   const nx=dx/len,ny=dy/len;B.x=cx+nx*(bodyRx+B.r+2);B.y=cy+ny*(bodyRy+B.r+2);
+ const diving=p.state===3,attacking=p.state===2;
+ const bodyRx=61+(attacking?15:0)+(diving?30:0),bodyRy=58+(diving?10:0);
+ const rx=bodyRx+B.r*.82,ry=bodyRy+B.r*.82;
+ if(dx*dx/(rx*rx)+dy*dy/(ry*ry)>=1)return;
+ if(B.lastHit===idx)return;
+ // 일반 접촉: 중심에서 멀리 맞을수록 수평 속도가 커지고 최소 높이로 강하게 튐
+ B.vx=dx<0?-Math.floor(Math.abs(dx)/7):Math.floor(Math.abs(dx)/7);
+ if(B.vx===0)B.vx=[-1,0,1][Math.floor(Math.random()*3)];
+ B.vy=-Math.max(NORMAL_BOUNCE,Math.abs(B.vy));B.pow=0;
+ if(attacking&&p.attackInput){
+   const a=p.attackInput;B.vx=(Math.abs(a.x)+1)*10*(B.x<NX?1:-1);
+   B.vy=Math.abs(B.vy)*a.y*2;B.pow=24;shake=10;burst(B.x,B.y,p.s?'#ff573d':'#62d8ff');
  }
+ if(diving)B.vx+=p.diveDir*1.5;
+ const len=Math.hypot(dx,dy)||1;B.x=cx+dx/len*(bodyRx+B.r+2);B.y=cy+dy/len*(bodyRy+B.r+2);B.lastHit=idx;
 }
 function upB(){
  if(B.pow){trail.push({x:B.x,y:B.y,l:13});if(trail.length>15)trail.shift();B.pow--}
- B.vy+=0.62; B.x+=B.vx; B.y+=B.vy; B.spin+=B.vx*.014;
- /* 좌우 벽/천장 반사. 천장은 원작처럼 속도를 죽이지 않고 다시 아래로 보낸다. */
- if(B.x-B.r<28){B.x=28+B.r;B.vx=Math.abs(B.vx)}
- if(B.x+B.r>W-28){B.x=W-28-B.r;B.vx=-Math.abs(B.vx)}
- if(B.y-B.r<20){B.y=20+B.r;B.vy=Math.max(1.0,Math.abs(B.vy)*.18)}
- /* 네트 상단/측면을 분리해 반사 */
+ B.x+=B.vx;B.y+=B.vy;B.vy+=GRAV;B.spin+=B.vx*.014;
+ if(B.x-B.r<28){B.x=28+B.r;B.vx=Math.abs(B.vx);B.lastHit=-1}
+ if(B.x+B.r>W-28){B.x=W-28-B.r;B.vx=-Math.abs(B.vx);B.lastHit=-1}
+ if(B.y-B.r<20){B.y=20+B.r;B.vy=1;B.lastHit=-1}
  if(B.x+B.r>NX-10&&B.x-B.r<NX+10&&B.y+B.r>NT){
-   if(B.y<NT&&B.vy>0){B.y=NT-B.r;B.vy=-Math.abs(B.vy)}
-   else if(B.x<NX){B.x=NX-10-B.r;B.vx=-Math.abs(B.vx)}
-   else{B.x=NX+10+B.r;B.vx=Math.abs(B.vx)}
+   if(B.y<NT&&B.vy>0){B.y=NT-B.r;B.vy=-Math.abs(B.vy)}else if(B.x<NX){B.x=NX-10-B.r;B.vx=-Math.abs(B.vx)}else{B.x=NX+10+B.r;B.vx=Math.abs(B.vx)}B.lastHit=-1;
  }
- hit(P[0]);hit(P[1]);
+ if(Math.abs(B.x-P[0].x)>150&&Math.abs(B.x-P[1].x)>150)B.lastHit=-1;
+ hit(P[0],0);hit(P[1],1);
  if(B.y+B.r>=G)point(B.x<NX?1:0)
 }
 function char(p){
- let state='idle';
- if(p.dive>0) state='air';
- else if(p.atk>4) state='spike';
- else if(!p.on && p.vy<-1.5) state='jump';
- else if(!p.on) state='air';
- else if(Math.abs(p.vx)>1) state='run';
- else if(p.on && Math.abs(p.vy)<.1) state='idle';
- let key=(p.s?'p2_':'p1_')+state;/* P2의 손상된 jump/air/spike 프레임은 사용하지 않고 정상 idle/run 프레임으로 공중/공격 자세를 연출 */if(p.s&&(state==='jump'||state==='air'||state==='spike'))key=(Math.abs(p.vx)>1?'p2_run':'p2_idle');const im=spriteImg[key];
- g.save();g.translate(p.x,p.y+p.h/2);if(p.dive>0)g.rotate(p.face*.38);else if(p.s&&!p.on)g.rotate(p.face*-.10);g.scale(p.face,1);if(p.s&&!p.on&&p.dive<=0)g.scale(.94,1.06);
- if(im&&im.complete&&im.naturalWidth){
-   const dw=p.dive>0?150:132,dh=p.dive>0?150:174;if(p.recover>0)g.scale(1.12,.88);g.drawImage(im,-dw/2,-dh/2-10,dw,dh);
- }else{
-   g.fillStyle=p.s?'#242630':'#f4fbff';g.strokeStyle=p.s?'#ff573d':'#55cfff';g.lineWidth=6;g.beginPath();g.ellipse(0,0,38,42,0,0,Math.PI*2);g.fill();g.stroke();
- }
- g.restore();
-}function ball(){
- g.save();g.translate(B.x,B.y);g.rotate(B.spin);
- if(B.pow){g.shadowBlur=26;g.shadowColor='#ff7a18';}else{g.shadowBlur=10;g.shadowColor='#fff0a0';}
- const rg=g.createRadialGradient(-9,-11,3,0,0,B.r+5);rg.addColorStop(0,'#ffffff');rg.addColorStop(.62,'#f8fbff');rg.addColorStop(1,'#dce8f2');
- g.fillStyle=rg;g.strokeStyle='#324b67';g.lineWidth=3.5;g.beginPath();g.arc(0,0,B.r,0,Math.PI*2);g.fill();g.stroke();
- g.strokeStyle='#ef5549';g.lineWidth=5;g.beginPath();g.arc(-5,0,B.r*.78,-1.25,.75);g.stroke();g.strokeStyle='#278bd6';g.beginPath();g.arc(5,0,B.r*.78,1.9,3.9);g.stroke();g.strokeStyle='#f3b62f';g.lineWidth=4;g.beginPath();g.arc(0,3,B.r*.63,.15,1.75);g.stroke();
- g.fillStyle='#ffd52e';g.strokeStyle='#d94922';g.lineWidth=2;g.beginPath();g.moveTo(-6,-21);g.lineTo(9,-5);g.lineTo(2,-5);g.lineTo(12,21);g.lineTo(-12,4);g.lineTo(-4,4);g.closePath();g.fill();g.stroke();g.restore();
-}function draw(){g.save();if(shake){g.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);shake*=.72}let sky=g.createLinearGradient(0,0,0,H);sky.addColorStop(0,'#087ee8');sky.addColorStop(.55,'#7ad8f5');sky.addColorStop(.56,'#1aa6ce');sky.addColorStop(.69,'#51cfe2');sky.addColorStop(.70,'#f3cf83');sky.addColorStop(1,'#d99b4d');g.fillStyle=sky;g.fillRect(-20,-20,W+40,H+40);g.fillStyle='#fff';for(let i=0;i<6;i++){g.globalAlpha=.8;g.beginPath();g.ellipse(80+i*205,135+(i%2)*42,70,22,0,0,7);g.ellipse(120+i*205,128+(i%2)*42,43,28,0,0,7);g.fill()}g.globalAlpha=1;g.fillStyle='#157c66';g.beginPath();g.moveTo(0,350);for(let i=0;i<=W;i+=90)g.lineTo(i,310+Math.sin(i*.018)*30);g.lineTo(W,420);g.lineTo(0,420);g.fill();g.fillStyle='#e8b965';g.fillRect(0,G,W,H-G);g.strokeStyle='#fff9';g.lineWidth=5;g.beginPath();g.moveTo(0,G+2);g.lineTo(W,G+2);g.stroke();trail.forEach((t,i)=>{g.fillStyle=`rgba(255,80,55,${.05+i*.035})`;g.beginPath();g.arc(t.x,t.y,14+i*1.25,0,Math.PI*2);g.fill()});g.fillStyle='#243b55';g.fillRect(NX-10,NT,20,G-NT);g.strokeStyle='#eef7ff';g.lineWidth=4;g.strokeRect(NX-7,NT+8,14,130);for(let y=NT+15;y<NT+135;y+=15){g.beginPath();g.moveTo(NX-7,y);g.lineTo(NX+7,y);g.stroke()}char(P[0]);char(P[1]);ball();fx.forEach(z=>{g.globalAlpha=z.l/24;g.fillStyle=z.c;g.beginPath();g.arc(z.x,z.y,4,0,7);g.fill()});g.globalAlpha=1;g.fillStyle='#07182c';g.textAlign='center';g.font='900 54px system-ui';g.fillText(score[0]+'   VS   '+score[1],NX,66);g.font='900 18px system-ui';g.fillStyle='#fff';g.fillText(mode==='ai'?'P1                         COM':'P1                           P2',NX,96);if(goalTimer>0){g.fillStyle='rgba(5,18,35,.28)';g.fillRect(0,0,W,H);g.fillStyle='#fff';g.font='900 34px system-ui';g.fillText('SLOW MOTION',NX,142);g.font='900 22px system-ui';g.fillText(goalWinner===0?'PLAYER 1 POINT!':(mode==='ai'?'COM POINT!':'PLAYER 2 POINT!'),NX,176)}if(over===true){g.fillStyle='#06111ccc';g.fillRect(0,0,W,H);g.fillStyle='#fff';g.font='900 58px system-ui';g.fillText(score[0]>score[1]?'PLAYER 1 WIN!':'PLAYER 2 WIN!',NX,280);g.font='24px system-ui';g.fillText('다시 시작 버튼을 눌러주세요',NX,325)}g.restore()}
-function loop(){if(!over||over==='pending'){if(goalTimer>0){goalTimer--;slowTick++;if(slowTick%6===0){P.forEach(p=>{p.x+=p.vx*.14;p.vy+=.10;p.y+=p.vy*.14;if(p.y+p.h>=G){p.y=G-p.h;p.vy=0;p.on=1}p.vx*=.96});B.vy+=.10;B.x+=B.vx*.14;B.y+=B.vy*.14;if(B.y+B.r>G){B.y=G-B.r;B.vy=-Math.abs(B.vy)*.25}B.spin+=B.vx*.003}if(goalTimer<=0)finishPoint()}else if(pause)pause--;else{ctrl(P[0],'ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter');mode==='ai'?cpu(P[1]):ctrl(P[1],'KeyA','KeyD','KeyW','KeyS','Space');upP(P[0]);upP(P[1]);upB()}}fx.forEach(z=>{let sm=goalTimer>0?.18:1;z.x+=z.vx*sm;z.y+=z.vy*sm;z.vx*=goalTimer>0?.99:.94;z.vy*=goalTimer>0?.99:.94;z.l-=goalTimer>0?.18:1});fx=fx.filter(z=>z.l>0);trail=trail.filter(z=>--z.l>0);draw();requestAnimationFrame(loop)}
-document.addEventListener('keydown',e=>{if(document.activeElement!==c)return;if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter','KeyA','KeyD','KeyW','KeyS','Space'].includes(e.code)){e.preventDefault();keys.add(e.code)}});document.addEventListener('keyup',e=>keys.delete(e.code));c.addEventListener('pointerdown',()=>c.focus());document.querySelector('#ai').onclick=()=>{mode='ai';reset()};document.querySelector('#pvp').onclick=()=>{mode='pvp';reset()};document.querySelector('#reset').onclick=()=>reset();reset();loop();
+ let state='idle';if(p.state===3)state='air';else if(p.state===2)state='spike';else if(!p.on&&p.vy<-1.5)state='jump';else if(!p.on)state='air';else if(Math.abs(p.vx)>1)state='run';
+ let key=(p.s?'p2_':'p1_')+state;if(p.s&&(state==='jump'||state==='air'||state==='spike'))key=(Math.abs(p.vx)>1?'p2_run':'p2_idle');const im=spriteImg[key];
+ g.save();g.translate(p.x,p.y+p.h/2);if(p.state===3)g.rotate(p.face*.48);else if(p.s&&!p.on)g.rotate(p.face*-.10);g.scale(p.face,1);if(p.s&&!p.on&&p.state!==3)g.scale(.94,1.06);
+ if(im&&im.complete&&im.naturalWidth){const dw=p.state===3?154:132,dh=p.state===3?138:174;if(p.state===4)g.scale(1.16,.82);g.drawImage(im,-dw/2,-dh/2-10,dw,dh)}else{g.fillStyle=p.s?'#242630':'#f4fbff';g.strokeStyle=p.s?'#ff573d':'#55cfff';g.lineWidth=6;g.beginPath();g.ellipse(0,0,38,42,0,0,Math.PI*2);g.fill();g.stroke()}g.restore();
+}
+function ball(){g.save();g.translate(B.x,B.y);g.rotate(B.spin);if(B.pow){g.shadowBlur=26;g.shadowColor='#ff7a18'}else{g.shadowBlur=10;g.shadowColor='#fff0a0'}const rg=g.createRadialGradient(-9,-11,3,0,0,B.r+5);rg.addColorStop(0,'#fff');rg.addColorStop(.62,'#f8fbff');rg.addColorStop(1,'#dce8f2');g.fillStyle=rg;g.strokeStyle='#324b67';g.lineWidth=3.5;g.beginPath();g.arc(0,0,B.r,0,Math.PI*2);g.fill();g.stroke();g.strokeStyle='#ef5549';g.lineWidth=5;g.beginPath();g.arc(-5,0,B.r*.78,-1.25,.75);g.stroke();g.strokeStyle='#278bd6';g.beginPath();g.arc(5,0,B.r*.78,1.9,3.9);g.stroke();g.strokeStyle='#f3b62f';g.lineWidth=4;g.beginPath();g.arc(0,3,B.r*.63,.15,1.75);g.stroke();g.restore()}
+function draw(){g.save();if(shake){g.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);shake*=.72}let sky=g.createLinearGradient(0,0,0,H);sky.addColorStop(0,'#087ee8');sky.addColorStop(.55,'#7ad8f5');sky.addColorStop(.56,'#1aa6ce');sky.addColorStop(.69,'#51cfe2');sky.addColorStop(.70,'#f3cf83');sky.addColorStop(1,'#d99b4d');g.fillStyle=sky;g.fillRect(-20,-20,W+40,H+40);g.fillStyle='#fff';for(let i=0;i<6;i++){g.globalAlpha=.8;g.beginPath();g.ellipse(80+i*205,135+(i%2)*42,70,22,0,0,7);g.ellipse(120+i*205,128+(i%2)*42,43,28,0,0,7);g.fill()}g.globalAlpha=1;g.fillStyle='#157c66';g.beginPath();g.moveTo(0,350);for(let i=0;i<=W;i+=90)g.lineTo(i,310+Math.sin(i*.018)*30);g.lineTo(W,420);g.lineTo(0,420);g.fill();g.fillStyle='#e8b965';g.fillRect(0,G,W,H-G);g.strokeStyle='#fff9';g.lineWidth=5;g.beginPath();g.moveTo(0,G+2);g.lineTo(W,G+2);g.stroke();trail.forEach((t,i)=>{g.fillStyle=`rgba(255,80,55,${.05+i*.035})`;g.beginPath();g.arc(t.x,t.y,14+i*1.25,0,Math.PI*2);g.fill()});g.fillStyle='#243b55';g.fillRect(NX-10,NT,20,G-NT);g.strokeStyle='#eef7ff';g.lineWidth=4;g.strokeRect(NX-7,NT+8,14,130);for(let y=NT+15;y<NT+135;y+=15){g.beginPath();g.moveTo(NX-7,y);g.lineTo(NX+7,y);g.stroke()}char(P[0]);char(P[1]);ball();fx.forEach(z=>{g.globalAlpha=z.l/24;g.fillStyle=z.c;g.beginPath();g.arc(z.x,z.y,4,0,7);g.fill()});g.globalAlpha=1;g.fillStyle='#07182c';g.textAlign='center';g.font='900 54px system-ui';g.fillText(score[0]+'   VS   '+score[1],NX,66);g.font='900 18px system-ui';g.fillStyle='#fff';g.fillText(mode==='ai'?'P1                         COM':'P1                           P2',NX,96);if(goalTimer>0){g.fillStyle='rgba(5,18,35,.28)';g.fillRect(0,0,W,H);g.fillStyle='#fff';g.font='900 34px system-ui';g.fillText('SLOW MOTION',NX,142);g.font='900 22px system-ui';g.fillText(goalWinner===0?'PLAYER 1 POINT!':(mode==='ai'?'COM POINT!':'PLAYER 2 POINT!'),NX,176)}if(over===true){g.fillStyle='#06111ccc';g.fillRect(0,0,W,H);g.fillStyle='#fff';g.font='900 58px system-ui';g.fillText(score[0]>score[1]?'PLAYER 1 WIN!':'PLAYER 2 WIN!',NX,280);g.font='24px system-ui';g.fillText('다시 시작 버튼을 눌러주세요',NX,325)}g.restore()}
+function physicsTick(){
+ if(over===true)return;
+ if(goalTimer>0){goalTimer--;P.forEach(p=>{p.x+=p.vx*.08;p.y+=p.vy*.08});B.x+=B.vx*.08;B.y+=B.vy*.08;B.spin+=B.vx*.002;if(B.y+B.r>G){B.y=G-B.r;B.vy=-Math.abs(B.vy)*.18}if(goalTimer<=0)finishPoint();return}
+ if(pause){pause--;return}
+ const i1=readInput('ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter');const i2=mode==='ai'?cpuInput(P[1],P[0]):readInput('KeyA','KeyD','KeyW','KeyS','Space');
+ applyInput(P[0],i1);applyInput(P[1],i2);upP(P[0]);upP(P[1]);upB();
+ fx.forEach(z=>{z.x+=z.vx;z.y+=z.vy;z.vx*=.94;z.vy*=.94;z.l--});fx=fx.filter(z=>z.l>0);trail=trail.filter(z=>--z.l>0);
+}
+let last=performance.now(),acc=0;
+function loop(now){acc+=Math.min(100,now-last);last=now;while(acc>=TICK_MS){physicsTick();acc-=TICK_MS}draw();requestAnimationFrame(loop)}
+document.addEventListener('keydown',e=>{if(document.activeElement!==c)return;if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter','KeyA','KeyD','KeyW','KeyS','Space'].includes(e.code)){e.preventDefault();keys.add(e.code)}});document.addEventListener('keyup',e=>keys.delete(e.code));c.addEventListener('pointerdown',()=>c.focus());document.querySelector('#ai').onclick=()=>{mode='ai';reset()};document.querySelector('#pvp').onclick=()=>{mode='pvp';reset()};document.querySelector('#reset').onclick=()=>reset();reset();requestAnimationFrame(loop);
 
 </script></body></html>
