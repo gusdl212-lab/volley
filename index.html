@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>KOKO Volley v4.2</title>
+<title>KOKO Volley v4.3</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;background:#07182d;color:#fff;font-family:Pretendard,"Noto Sans KR",system-ui,sans-serif}body{min-height:100vh}button{font:inherit}
 #app{max-width:1420px;margin:auto;padding:14px}.screen{display:none}.screen.active{display:block}
@@ -14,49 +14,59 @@
 .gameTop{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}.gameTop button{padding:10px 14px;border:1px solid #ffffff33;border-radius:11px;background:#142a47;color:#fff;font-weight:900;cursor:pointer}#back{margin-right:auto;background:#263c59}.hint{font-size:13px;opacity:.82}.wrap{position:relative;border-radius:20px;overflow:hidden;background:#178ee8;box-shadow:0 14px 44px #0007;border:2px solid #ffffff22}canvas{display:block;width:100%;height:auto;outline:none}canvas:focus{box-shadow:inset 0 0 0 3px #7be7ff}.note{margin-top:10px;padding:11px 13px;border-radius:12px;background:#0e223c;font-size:13px;opacity:.9}
 @media(max-width:700px){#app{padding:6px}.hero{aspect-ratio:3/4;min-height:680px;background-size:cover;background-position:center top}.menu{width:82%;top:56%}.menu button{min-height:56px;font-size:17px}.subrow button{font-size:12px}}
 
-/* v4.2 subtle beach polish */
-.hero:before{
- content:"";position:absolute;inset:0;pointer-events:none;z-index:1;
+/* v4.3 beach polish */
+#game .wrap{position:relative;overflow:hidden;border-radius:22px}
+#game .wrap:before{
+ content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
  background:
- radial-gradient(circle at 82% 14%,rgba(255,249,190,.22),transparent 13%),
- linear-gradient(180deg,rgba(76,207,255,.07),transparent 45%,rgba(255,211,121,.06) 82%,rgba(4,36,60,.06));
+   radial-gradient(circle at 82% 13%,rgba(255,248,185,.20),transparent 14%),
+   linear-gradient(180deg,rgba(92,213,255,.06),transparent 45%,rgba(255,222,150,.05) 82%,rgba(7,30,48,.05));
  mix-blend-mode:screen
 }
-.hero:after{
- content:"";position:absolute;left:0;right:0;bottom:0;height:23%;pointer-events:none;z-index:1;
+#game .wrap:after{
+ content:"";position:absolute;left:0;right:0;bottom:0;height:22%;z-index:2;pointer-events:none;
  background:
- radial-gradient(ellipse at 20% 90%,rgba(255,255,255,.09),transparent 28%),
- radial-gradient(ellipse at 75% 95%,rgba(255,239,184,.10),transparent 32%)
+   radial-gradient(ellipse at 17% 92%,rgba(255,255,255,.08),transparent 27%),
+   radial-gradient(ellipse at 77% 96%,rgba(255,237,178,.09),transparent 31%)
 }
+#pauseOverlay{
+ display:none;position:absolute;inset:0;z-index:20;pointer-events:none;
+ align-items:center;justify-content:center;background:rgba(3,13,27,.52);
+ backdrop-filter:blur(2px)
+}
+#pauseOverlay.show{display:flex}
+#pauseOverlay .pauseCard{
+ text-align:center;padding:24px 32px;border-radius:20px;background:rgba(6,23,43,.92);
+ border:1px solid rgba(255,255,255,.22);box-shadow:0 16px 45px rgba(0,0,0,.32)
+}
+#pauseOverlay strong{display:block;font-size:32px;letter-spacing:2px}
+#pauseOverlay span{display:block;margin-top:8px;font-size:14px;opacity:.8}
 
 </style></head><body><main id="app">
-<section id="home" class="screen active"><div class="hero"><div class="menu"><button id="startAI" class="solo">⚡ 1P vs AI</button><button id="start2P" class="local">👥 2P 대전</button><button id="startOnline" class="online">🌐 온라인 대전</button><div class="subrow"><button id="records">▥ 전적 보기</button><button id="skins">♟ 스킨 선택</button></div></div><div id="toast" class="toast"></div><div class="version">v4.2 CLASSIC ENGINE</div></div></section>
-<section id="game" class="screen"><div class="gameTop"><button id="back">← 메인 메뉴</button><button id="ai">1P vs AI</button><button id="pvp">2P 로컬</button><button id="reset">다시 시작</button><span class="hint">1P: ← → / ↑ / Enter 공격 · 2P: A D / W / Space 공격</span></div><div class="wrap"><canvas id="c" width="1100" height="650" tabindex="0"></canvas></div><div class="note"><b>v4.2 CLASSIC PHYSICS · 10% SLOWER · ESC OWNER PAUSE · BEACH POLISH</b> · 업로드한 그래픽은 유지하고 432×304 원작 물리 좌표를 1100×650 화면에 비례 변환했습니다.</div></section>
+<section id="home" class="screen active"><div class="hero"><div class="menu"><button id="startAI" class="solo">⚡ 1P vs AI</button><button id="start2P" class="local">👥 2P 대전</button><button id="startOnline" class="online">🌐 온라인 대전</button><div class="subrow"><button id="records">▥ 전적 보기</button><button id="skins">♟ 스킨 선택</button></div></div><div id="toast" class="toast"></div><div class="version">v4.3 CLASSIC ENGINE</div></div></section>
+<section id="game" class="screen"><div class="gameTop"><button id="back">← 메인 메뉴</button><button id="ai">1P vs AI</button><button id="pvp">2P 로컬</button><button id="reset">다시 시작</button><button id="pauseBtn">⏸ 일시정지 (ESC)</button><span class="hint">1P: ← → / ↑ / Enter 공격 · 2P: A D / W / Space 공격</span></div><div class="wrap"><canvas id="c" width="1100" height="650" tabindex="0"></canvas><div id="pauseOverlay"><div class="pauseCard"><strong>PAUSED</strong><span id="pauseText">1P가 일시정지했습니다 · 일시정지한 플레이어만 해제할 수 있습니다.</span></div></div></div><div class="note"><b>v4.3 CLASSIC PHYSICS · 10% SLOWER · BEACH POLISH · OWNER PAUSE</b> · 업로드한 그래픽은 유지하고 432×304 원작 물리 좌표를 1100×650 화면에 비례 변환했습니다.</div></section>
 </main><script>
 const home=document.querySelector('#home'),gameScreen=document.querySelector('#game'),toast=document.querySelector('#toast');
-let pauseOwner=null;let pauseRequestedBy=null;
-function showGame(kind){home.classList.remove('active');gameScreen.classList.add('active');setTimeout(()=>{(kind==='ai'?document.querySelector('#ai'):document.querySelector('#pvp')).click();document.querySelector('#c').focus()},50)}
+function showGame(kind){gamePauseOwner=null;updatePauseUI();home.classList.remove('active');gameScreen.classList.add('active');setTimeout(()=>{(kind==='ai'?document.querySelector('#ai'):document.querySelector('#pvp')).click();document.querySelector('#c').focus()},50)}
 function say(t){toast.textContent=t;toast.classList.add('show');clearTimeout(say.t);say.t=setTimeout(()=>toast.classList.remove('show'),2200)}
-document.querySelector('#startAI').
-function localPauseActor(){
-  // Offline: keyboard belongs to 1P. Online mode can replace this with authenticated player id.
-  return "P1";
+
+let gamePauseOwner=null;
+function currentLocalPauseActor(){return 'P1'}
+function updatePauseUI(){
+ const ov=document.querySelector('#pauseOverlay'),btn=document.querySelector('#pauseBtn'),txt=document.querySelector('#pauseText');
+ if(ov)ov.classList.toggle('show',gamePauseOwner!==null);
+ if(btn)btn.textContent=gamePauseOwner===null?'⏸ 일시정지 (ESC)':'▶ 계속하기 (ESC)';
+ if(txt)txt.textContent=(gamePauseOwner==='P1'?'1P':gamePauseOwner)+'가 일시정지했습니다 · 일시정지한 플레이어만 해제할 수 있습니다.';
 }
-function setPauseBy(actor){
-  if(pauseOwner===null){
-    pauseOwner=actor;
-  }else if(pauseOwner===actor){
-    pauseOwner=null;
-  }else{
-    return; // another player cannot release someone else's pause
-  }
-  const layer=document.getElementById("pauseLayer");
-  const who=document.getElementById("pauseWho");
-  if(layer) layer.style.display=pauseOwner?"flex":"none";
-  if(who) who.textContent=(pauseOwner==="P1"?"1P":pauseOwner)+"가 일시정지했습니다.";
+function toggleOwnedPause(actor){
+ if(gamePauseOwner===null){gamePauseOwner=actor;keys.clear();}
+ else if(gamePauseOwner===actor)gamePauseOwner=null;
+ else return false;
+ updatePauseUI();
+ return true;
 }
 
-addEventListener('click',()=>showGame('ai'));document.querySelector('#start2P').addEventListener('click',()=>showGame('pvp'));document.querySelector('#startOnline').addEventListener('click',()=>say('온라인 대전은 다음 단계에서 Firebase 방 시스템으로 연결합니다.'));document.querySelector('#records').addEventListener('click',()=>say('전적 시스템은 온라인 계정과 함께 연결할 예정입니다.'));document.querySelector('#skins').addEventListener('click',()=>say('캐릭터 스프라이트 제작 후 스킨 선택을 활성화합니다.'));document.querySelector('#back').addEventListener('click',()=>{gameScreen.classList.remove('active');home.classList.add('active')});
+document.querySelector('#startAI').addEventListener('click',()=>showGame('ai'));document.querySelector('#start2P').addEventListener('click',()=>showGame('pvp'));document.querySelector('#startOnline').addEventListener('click',()=>say('온라인 대전은 다음 단계에서 Firebase 방 시스템으로 연결합니다.'));document.querySelector('#records').addEventListener('click',()=>say('전적 시스템은 온라인 계정과 함께 연결할 예정입니다.'));document.querySelector('#skins').addEventListener('click',()=>say('캐릭터 스프라이트 제작 후 스킨 선택을 활성화합니다.'));document.querySelector('#back').addEventListener('click',()=>{gamePauseOwner=null;updatePauseUI();gameScreen.classList.remove('active');home.classList.add('active')});
 
 
 const SPRITES = {
@@ -77,7 +87,7 @@ const spriteImg={}; Object.entries(SPRITES).forEach(([k,v])=>{const im=new Image
 
 const c=document.querySelector('#c'),g=c.getContext('2d'),W=c.width,H=c.height,G=570,NX=W/2,NT=350;
 let mode='ai',keys=new Set(),score=[0,0],serve=0,pause=24,over=false,trail=[],fx=[],shake=0,goalTimer=0,goalWinner=-1;
-const TICK_MS=1000/30; // 클래식 게임처럼 물리 속도를 모니터 주사율과 분리
+const TICK_MS=1000/27; // 클래식 게임처럼 물리 속도를 모니터 주사율과 분리
 const SX=W/432, SY=G/276; const MOVE=6*SX,JUMP=-16*SY,GRAV=1*SY,DIVE_X=8*SX,DIVE_Y=-5*SY,NORMAL_BOUNCE=15*SY;
 function mk(x,s){return{x,y:G-86,vx:0,vy:0,w:82,h:86,s,on:1,face:s?-1:1,state:0,atkFrame:0,attackInput:null,diveDir:0,lieTicks:0,attackHeld:false,hitLatch:false,delay:0}}
 let P=[mk(36*SX,0),mk(396*SX,1)];
@@ -207,6 +217,7 @@ function char(p){
 function ball(){g.save();g.translate(B.x,B.y);g.rotate(B.spin);if(B.pow){g.shadowBlur=26;g.shadowColor='#ff7a18'}else{g.shadowBlur=10;g.shadowColor='#fff0a0'}const rg=g.createRadialGradient(-9,-11,3,0,0,B.r+5);rg.addColorStop(0,'#fff');rg.addColorStop(.62,'#f8fbff');rg.addColorStop(1,'#dce8f2');g.fillStyle=rg;g.strokeStyle='#324b67';g.lineWidth=3.5;g.beginPath();g.arc(0,0,B.r,0,Math.PI*2);g.fill();g.stroke();g.strokeStyle='#ef5549';g.lineWidth=5;g.beginPath();g.arc(-5,0,B.r*.78,-1.25,.75);g.stroke();g.strokeStyle='#278bd6';g.beginPath();g.arc(5,0,B.r*.78,1.9,3.9);g.stroke();g.strokeStyle='#f3b62f';g.lineWidth=4;g.beginPath();g.arc(0,3,B.r*.63,.15,1.75);g.stroke();g.restore()}
 function draw(){g.save();if(shake){g.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);shake*=.72}let sky=g.createLinearGradient(0,0,0,H);sky.addColorStop(0,'#087ee8');sky.addColorStop(.55,'#7ad8f5');sky.addColorStop(.56,'#1aa6ce');sky.addColorStop(.69,'#51cfe2');sky.addColorStop(.70,'#f3cf83');sky.addColorStop(1,'#d99b4d');g.fillStyle=sky;g.fillRect(-20,-20,W+40,H+40);g.fillStyle='#fff';for(let i=0;i<6;i++){g.globalAlpha=.8;g.beginPath();g.ellipse(80+i*205,135+(i%2)*42,70,22,0,0,7);g.ellipse(120+i*205,128+(i%2)*42,43,28,0,0,7);g.fill()}g.globalAlpha=1;g.fillStyle='#157c66';g.beginPath();g.moveTo(0,350);for(let i=0;i<=W;i+=90)g.lineTo(i,310+Math.sin(i*.018)*30);g.lineTo(W,420);g.lineTo(0,420);g.fill();g.fillStyle='#e8b965';g.fillRect(0,G,W,H-G);g.strokeStyle='#fff9';g.lineWidth=5;g.beginPath();g.moveTo(0,G+2);g.lineTo(W,G+2);g.stroke();trail.forEach((t,i)=>{g.fillStyle=`rgba(255,80,55,${.05+i*.035})`;g.beginPath();g.arc(t.x,t.y,14+i*1.25,0,Math.PI*2);g.fill()});g.fillStyle='#243b55';g.fillRect(NX-10,NT,20,G-NT);g.strokeStyle='#eef7ff';g.lineWidth=4;g.strokeRect(NX-7,NT+8,14,130);for(let y=NT+15;y<NT+135;y+=15){g.beginPath();g.moveTo(NX-7,y);g.lineTo(NX+7,y);g.stroke()}char(P[0]);char(P[1]);ball();fx.forEach(z=>{g.globalAlpha=z.l/24;g.fillStyle=z.c;g.beginPath();g.arc(z.x,z.y,4,0,7);g.fill()});g.globalAlpha=1;g.fillStyle='#07182c';g.textAlign='center';g.font='900 54px system-ui';g.fillText(score[0]+'   VS   '+score[1],NX,66);g.font='900 18px system-ui';g.fillStyle='#fff';g.fillText(mode==='ai'?'P1                         COM':'P1                           P2',NX,96);if(goalTimer>0){g.fillStyle='rgba(5,18,35,.28)';g.fillRect(0,0,W,H);g.fillStyle='#fff';g.font='900 34px system-ui';g.fillText('SLOW MOTION',NX,142);g.font='900 22px system-ui';g.fillText(goalWinner===0?'PLAYER 1 POINT!':(mode==='ai'?'COM POINT!':'PLAYER 2 POINT!'),NX,176)}if(over===true){g.fillStyle='#06111ccc';g.fillRect(0,0,W,H);g.fillStyle='#fff';g.font='900 58px system-ui';g.fillText(score[0]>score[1]?'PLAYER 1 WIN!':'PLAYER 2 WIN!',NX,280);g.font='24px system-ui';g.fillText('다시 시작 버튼을 눌러주세요',NX,325)}g.restore()}
 function physicsTick(){
+ if(gamePauseOwner!==null)return;
  if(over===true)return;
  if(goalTimer>0){goalTimer--;P.forEach(p=>{p.x+=p.vx*.08;p.y+=p.vy*.08});B.x+=B.vx*.08;B.y+=B.vy*.08;B.spin+=B.vx*.002;if(B.y+B.r>G){B.y=G-B.r;B.vy=-Math.abs(B.vy)*.18}if(goalTimer<=0)finishPoint();return}
  if(pause){pause--;return}
@@ -217,22 +228,10 @@ function physicsTick(){
 let last=performance.now(),acc=0;
 function loop(now){acc+=Math.min(100,now-last);last=now;while(acc>=TICK_MS){physicsTick();acc-=TICK_MS}draw();requestAnimationFrame(loop)}
 document.addEventListener('keydown',e=>{
- if(e.key==="Escape"){
-   e.preventDefault();
-   setPauseBy(localPauseActor());
-   return;
- }
- if(pauseOwner!==null){ e.preventDefault(); return; }
-if(document.activeElement!==c)return;if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter','KeyA','KeyD','KeyW','KeyS','Space'].includes(e.code)){e.preventDefault();keys.add(e.code)}});document.addEventListener('keyup',e=>keys.delete(e.code));c.addEventListener('pointerdown',()=>c.focus());document.querySelector('#ai').onclick=()=>{mode='ai';reset()};document.querySelector('#pvp').onclick=()=>{mode='pvp';reset()};document.querySelector('#reset').onclick=()=>reset();reset();requestAnimationFrame(loop);
+ if(document.activeElement!==c)return;
+ if(e.code==='Escape'){e.preventDefault();toggleOwnedPause(currentLocalPauseActor());return}
+ if(gamePauseOwner!==null){e.preventDefault();return}
+ if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter','KeyA','KeyD','KeyW','KeyS','Space'].includes(e.code)){e.preventDefault();keys.add(e.code)}
+});document.addEventListener('keyup',e=>keys.delete(e.code));c.addEventListener('pointerdown',()=>c.focus());document.querySelector('#ai').onclick=()=>{mode='ai';reset()};document.querySelector('#pvp').onclick=()=>{mode='pvp';reset()};document.querySelector('#reset').onclick=()=>{gamePauseOwner=null;updatePauseUI();reset()};document.querySelector('#pauseBtn').onclick=()=>{toggleOwnedPause(currentLocalPauseActor());c.focus()};reset();requestAnimationFrame(loop);
 
-</script>
-<div id="pauseLayer" style="display:none;position:absolute;inset:0;z-index:9999;background:rgba(3,12,25,.66);
-backdrop-filter:blur(3px);align-items:center;justify-content:center;text-align:center">
- <div style="padding:28px 38px;border-radius:22px;background:rgba(7,24,45,.92);border:1px solid rgba(255,255,255,.18);
- box-shadow:0 18px 60px rgba(0,0,0,.38)">
-  <div style="font-size:34px;font-weight:900;letter-spacing:2px">PAUSED</div>
-  <div id="pauseWho" style="margin-top:8px;opacity:.82">1P가 일시정지했습니다.</div>
-  <div style="margin-top:13px;font-size:13px;opacity:.68">일시정지한 플레이어만 ESC로 해제할 수 있습니다.</div>
- </div>
-</div>
-</body></html>
+</script></body></html>
