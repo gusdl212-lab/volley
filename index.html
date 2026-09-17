@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>KOKO Volley v5.0</title>
+<title>KOKO Volley v5.1</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;background:#07182d;color:#fff;font-family:Pretendard,"Noto Sans KR",system-ui,sans-serif}body{min-height:100vh}button{font:inherit}
 #app{max-width:1420px;margin:auto;padding:14px}.screen{display:none}.screen.active{display:block}
@@ -14,7 +14,7 @@
 .gameTop{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}.gameTop button{padding:10px 14px;border:1px solid #ffffff33;border-radius:11px;background:#142a47;color:#fff;font-weight:900;cursor:pointer}#back{margin-right:auto;background:#263c59}.hint{font-size:13px;opacity:.82}.wrap{position:relative;border-radius:20px;overflow:hidden;background:#178ee8;box-shadow:0 14px 44px #0007;border:2px solid #ffffff22}canvas{display:block;width:100%;height:auto;outline:none}canvas:focus{box-shadow:inset 0 0 0 3px #7be7ff}.note{margin-top:10px;padding:11px 13px;border-radius:12px;background:#0e223c;font-size:13px;opacity:.9}
 @media(max-width:700px){#app{padding:6px}.hero{aspect-ratio:3/4;min-height:680px;background-size:cover;background-position:center top}.menu{width:82%;top:56%}.menu button{min-height:56px;font-size:17px}.subrow button{font-size:12px}}
 
-/* v5.0 beach polish */
+/* v5.1 beach polish */
 #game .wrap{position:relative;overflow:hidden;border-radius:22px}
 #game .wrap:before{
  content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
@@ -43,8 +43,8 @@
 #pauseOverlay span{display:block;margin-top:8px;font-size:14px;opacity:.8}
 
 </style></head><body><main id="app">
-<section id="home" class="screen active"><div class="hero"><div class="menu"><button id="startAI" class="solo">⚡ 1P vs AI</button><button id="start2P" class="local">👥 2P 대전</button><button id="startOnline" class="online">🌐 온라인 대전</button><div class="subrow"><button id="records">▥ 전적 보기</button><button id="skins">♟ 스킨 선택</button></div></div><div id="toast" class="toast"></div><div class="version">v5.0 CLASSIC ENGINE</div></div></section>
-<section id="game" class="screen"><div class="gameTop"><button id="back">← 메인 메뉴</button><button id="ai">1P vs AI</button><button id="pvp">2P 로컬</button><button id="reset">다시 시작</button><button id="pauseBtn">⏸ 일시정지 (ESC)</button><span class="hint">1P: ← → / ↑ / Enter 공격 · 2P: A D / W / Space 공격</span></div><div class="wrap"><canvas id="c" width="1100" height="650" tabindex="0"></canvas><div id="pauseOverlay"><div class="pauseCard"><strong>PAUSED</strong><span id="pauseText">1P가 일시정지했습니다 · 일시정지한 플레이어만 해제할 수 있습니다.</span></div></div></div><div class="note"><b>v5.0 · RELEASE-TO-STOP AIR CONTROL · BALL SPEED -6% · ANIMATED BEACH · SLOW-MO SKIP</b> · 업로드한 그래픽은 유지하고 432×304 원작 물리 좌표를 1100×650 화면에 비례 변환했습니다.</div></section>
+<section id="home" class="screen active"><div class="hero"><div class="menu"><button id="startAI" class="solo">⚡ 1P vs AI</button><button id="start2P" class="local">👥 2P 대전</button><button id="startOnline" class="online">🌐 온라인 대전</button><div class="subrow"><button id="records">▥ 전적 보기</button><button id="skins">♟ 스킨 선택</button></div></div><div id="toast" class="toast"></div><div class="version">v5.1 CLASSIC ENGINE</div></div></section>
+<section id="game" class="screen"><div class="gameTop"><button id="back">← 메인 메뉴</button><button id="ai">1P vs AI</button><button id="pvp">2P 로컬</button><button id="reset">다시 시작</button><button id="pauseBtn">⏸ 일시정지 (ESC)</button><span class="hint">1P: ← → / ↑ / Enter 공격 · 2P: A D / W / Space 공격</span></div><div class="wrap"><canvas id="c" width="1100" height="650" tabindex="0"></canvas><div id="pauseOverlay"><div class="pauseCard"><strong>PAUSED</strong><span id="pauseText">1P가 일시정지했습니다 · 일시정지한 플레이어만 해제할 수 있습니다.</span></div></div></div><div class="note"><b>v5.1 · RELEASE-TO-STOP AIR CONTROL · BALL SPEED -6% · ANIMATED BEACH · SLOW-MO SKIP</b> · 업로드한 그래픽은 유지하고 432×304 원작 물리 좌표를 1100×650 화면에 비례 변환했습니다.</div></section>
 </main><script>
 const home=document.querySelector('#home'),gameScreen=document.querySelector('#game'),toast=document.querySelector('#toast');
 function showGame(kind){gamePauseOwner=null;updatePauseUI();home.classList.remove('active');gameScreen.classList.add('active');setTimeout(()=>{(kind==='ai'?document.querySelector('#ai'):document.querySelector('#pvp')).click();document.querySelector('#c').focus()},50)}
@@ -59,14 +59,15 @@ function updatePauseUI(){
  if(txt)txt.textContent=(gamePauseOwner==='P1'?'1P':gamePauseOwner)+'가 일시정지했습니다 · 일시정지한 플레이어만 해제할 수 있습니다.';
 }
 function toggleOwnedPause(actor){
- if(gamePauseOwner===null){gamePauseOwner=actor;keys.clear();held=Object.create(null);}
+ if(gamePauseOwner===null){gamePauseOwner=actor;}
  else if(gamePauseOwner===actor)gamePauseOwner=null;
  else return false;
+ clearInput();resetClock();
  updatePauseUI();
  return true;
 }
 
-document.querySelector('#startAI').addEventListener('click',()=>showGame('ai'));document.querySelector('#start2P').addEventListener('click',()=>showGame('pvp'));document.querySelector('#startOnline').addEventListener('click',()=>say('온라인 대전은 다음 단계에서 Firebase 방 시스템으로 연결합니다.'));document.querySelector('#records').addEventListener('click',()=>say('전적 시스템은 온라인 계정과 함께 연결할 예정입니다.'));document.querySelector('#skins').addEventListener('click',()=>say('캐릭터 스프라이트 제작 후 스킨 선택을 활성화합니다.'));document.querySelector('#back').addEventListener('click',()=>{gamePauseOwner=null;updatePauseUI();gameScreen.classList.remove('active');home.classList.add('active')});
+document.querySelector('#startAI').addEventListener('click',()=>showGame('ai'));document.querySelector('#start2P').addEventListener('click',()=>showGame('pvp'));document.querySelector('#startOnline').addEventListener('click',()=>say('온라인 대전은 다음 단계에서 Firebase 방 시스템으로 연결합니다.'));document.querySelector('#records').addEventListener('click',()=>say('전적 시스템은 온라인 계정과 함께 연결할 예정입니다.'));document.querySelector('#skins').addEventListener('click',()=>say('캐릭터 스프라이트 제작 후 스킨 선택을 활성화합니다.'));document.querySelector('#back').addEventListener('click',()=>{gamePauseOwner=null;updatePauseUI();gameScreen.classList.remove('active');home.classList.add('active');clearInput();resetClock()});
 
 
 const SPRITES = {
@@ -86,47 +87,47 @@ const SPRITES = {
 const spriteImg={}; Object.entries(SPRITES).forEach(([k,v])=>{const im=new Image();im.src=v;spriteImg[k]=im});
 
 const c=document.querySelector('#c'),g=c.getContext('2d'),W=c.width,H=c.height,G=570,NX=W/2,NT=350;
-let mode='ai',keys=new Set(),held=Object.create(null),score=[0,0],serve=0,pause=24,over=false,trail=[],fx=[],shake=0,goalTimer=0,goalWinner=-1,goalSkipArmed=false;goalSkipArmed=false;
+let mode='ai',score=[0,0],serve=0,pause=24,over=false,trail=[],fx=[],shake=0,goalTimer=0,goalWinner=-1,goalSkipArmed=false;
 const TICK_MS=1000/27; // 클래식 게임처럼 물리 속도를 모니터 주사율과 분리
 const SX=W/432, SY=G/276; const MOVE=6*SX,JUMP=-16*SY,GRAV=1*SY,DIVE_X=8*SX,DIVE_Y=-5*SY,NORMAL_BOUNCE=15*SY;
+// Physical keys survive a reset until keyup; held/edges never leak into a new state.
+const input={held:new Set(),pressed:new Set(),released:new Set(),physical:new Set(),aim:new Map()};
+const CONTROL_CODES=new Set(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter','KeyA','KeyD','KeyW','KeyS','Space']);
+function clearEdges(){input.pressed.clear();input.released.clear();input.aim.clear()}
+function clearInput(){input.held.clear();clearEdges();P.forEach(p=>{p.attackHeld=false;p.jumpHeld=false})}
+function axis(L,R,U,D){return{x:Number(input.held.has(R))-Number(input.held.has(L)),y:Number(input.held.has(D))-Number(input.held.has(U))}}
 function mk(x,s){return{x,y:G-86,vx:0,vy:0,w:82,h:86,s,on:1,face:s?-1:1,state:0,atkFrame:0,attackInput:null,diveDir:0,lieTicks:0,attackHeld:false,hitLatch:false,delay:0}}
 let P=[mk(36*SX,0),mk(396*SX,1)];
 function mb(){return{x:serve?396*SX:36*SX,y:60*SY,vx:0,vy:1*SY,r:20*SY,pow:0,spin:0,lastHit:-1}}
 let B=mb();
-function reset(all=true){if(all){score=[0,0];serve=0;over=false}P=[mk(36*SX,0),mk(396*SX,1)];B=mb();pause=24;goalTimer=0;goalSkipArmed=false;goalWinner=-1;trail=[];fx=[];c.focus()}
-function point(w){if(goalTimer>0)return;score[w]++;serve=w;goalWinner=w;goalTimer=60;goalSkipArmed=false;B.y=G-B.r;B.vy=-Math.max(1.2,Math.abs(B.vy)*.12);B.vx*=.12;shake=4;burst(B.x,B.y,w?'#ff694d':'#7ee8ff');if(score[w]>=15&&Math.abs(score[0]-score[1])>=2)over='pending'}
-function finishPoint(){const ended=over==='pending';goalTimer=0;goalSkipArmed=false;goalWinner=-1;if(ended){over=true;return}reset(false)}
-function readInput(L,R,U,D,A){return{x:(held[R]?1:0)-(held[L]?1:0),y:(held[D]?1:0)-(held[U]?1:0),hit:!!held[A]}}
+function reset(all=true){clearInput();gamePauseOwner=null;updatePauseUI();if(all){score=[0,0];serve=0;over=false}P=[mk(36*SX,0),mk(396*SX,1)];B=mb();pause=24;goalTimer=0;goalSkipArmed=false;goalWinner=-1;trail=[];fx=[];c.focus()}
+function point(w){if(goalTimer>0)return;score[w]++;serve=w;goalWinner=w;goalTimer=81;clearInput();goalSkipArmed=true;B.y=G-B.r;B.vy=-Math.max(1.2,Math.abs(B.vy)*.12);B.vx*=.12;shake=4;burst(B.x,B.y,w?'#ff694d':'#7ee8ff');if(score[w]>=15&&Math.abs(score[0]-score[1])>=2)over='pending'}
+function finishPoint(){clearInput();const ended=over==='pending';goalTimer=0;goalSkipArmed=false;goalWinner=-1;if(ended){over=true;return}reset(false)}
+function readInput(L,R,U,D,A){return{...axis(L,R,U,D),jump:input.pressed.has(U),hit:input.pressed.has(A),aim:input.aim.get(A)}}
 function applyInput(p,inp){
  if(p.lieTicks>0){p.vx=0;p.lieTicks--;if(p.lieTicks===0)p.state=0;return}
  if(p.state===3){p.vx=p.diveDir*DIVE_X;return}
  if(p.state===0){p.vx=inp.x*MOVE;if(inp.x)p.face=inp.x}
  if(p.state===1||p.state===2){p.vx=inp.x*MOVE;if(inp.x)p.face=inp.x}
- if(inp.y<0&&p.on&&p.state===0){p.vy=JUMP;p.on=0;p.state=1;p.atkFrame=0}
- if(inp.hit&&!p.attackHeld){
-   if(p.state===1){p.state=2;p.atkFrame=0;p.delay=0;p.attackInput={x:inp.x,y:inp.y};}
-   else if(p.state===0&&inp.x!==0){p.state=3;p.diveDir=inp.x;p.face=inp.x;p.vx=inp.x*DIVE_X;p.vy=DIVE_Y;p.on=0;}
+ if(inp.jump&&p.on&&p.state===0){p.vy=JUMP;p.on=0;p.state=1;p.atkFrame=0}
+ if(inp.hit){
+   if(p.state===1){p.state=2;p.atkFrame=0;p.delay=0;p.attackInput=inp.aim||{x:inp.x,y:inp.y};}
+   else if(p.state===0&&(inp.aim?.x??inp.x)!==0){p.state=3;p.diveDir=inp.aim?.x??inp.x;p.face=p.diveDir;p.vx=p.diveDir*DIVE_X;p.vy=DIVE_Y;p.on=0;}
  }
- p.attackHeld=inp.hit;
  if(p.state===2){p.atkFrame++;if(p.atkFrame>3){p.state=1;p.atkFrame=0;p.attackInput=null}}
 }
 function predictLanding(ball){
- let x=ball.x,y=ball.y,vx=ball.vx,vy=ball.vy;
- for(let i=0;i<240;i++){
-   let nx=x+vx;
-   if(nx-ball.r<28||nx+ball.r>W-28)vx=-vx;
-   if(y+vy-ball.r<20)vy=1;
-   if(Math.abs(x-NX)<ball.r+10&&y+ball.r>NT){if(y<NT&&vy>0)vy=-vy;else vx=x<NX?-Math.abs(vx):Math.abs(vx)}
-   x+=vx;y+=vy;vy+=GRAV;
-   if(y+ball.r>=G)return x;
- }
- return x;
+ const sim={...ball};
+ for(let i=0;i<240;i++)if(advanceBall(sim))return sim.x;
+ return sim.x;
 }
+function spikeVelocity(ball,aim){return{vx:(ball.x<NX?1:-1)*(Math.abs(aim.x)+1)*10*SX,vy:Math.max(NORMAL_BOUNCE,Math.abs(ball.vy))*aim.y*2}}
+
 function chooseAISpike(p,opp){
  // 여러 방향을 짧게 시뮬레이션해 상대와 가장 먼 낙하지점을 고름
  let best={x:0,y:1,score:-1e9};
  for(const xd of [0,1])for(const yd of [-1,0,1]){
-   let vx=(xd+1)*10*(p.s?-1:1),vy=Math.abs(B.vy)*yd*2;
+   let {vx,vy}=spikeVelocity(B,{x:xd,y:yd});
    let sim={x:B.x,y:B.y,vx,vy,r:B.r},land=predictLanding(sim);
    let valid=p.s?land<NX:land>NX;
    let sc=(valid?1000:-1000)+Math.abs(land-opp.x)+(yd===1?60:0);
@@ -144,11 +145,16 @@ function cpuInput(p,opp){
    else if(B.y>390&&dx>115&&dx<270){inp.x=Math.sign(B.x-p.x);inp.hit=true}
  }
  if((p.state===1||p.state===2)&&Math.abs(B.x-p.x)<105&&Math.abs(B.y-(p.y+30))<110){
-   const a=chooseAISpike(p,opp);inp.x=a.x*(p.s?-1:1);inp.y=a.y;inp.hit=true;
+   const a=chooseAISpike(p,opp);inp.aim={x:a.x*(p.s?-1:1),y:a.y};inp.hit=true;
  }
+ // The AI produces the same edge-triggered commands as a human controller.
+ const wantsHit=inp.hit,wantsJump=inp.y<0;
+ inp.hit=wantsHit&&!p.attackHeld;inp.jump=wantsJump&&!p.jumpHeld;
+ p.attackHeld=wantsHit;p.jumpHeld=wantsJump;
  return inp;
 }
 function upP(p){
+ p.prevX=p.x;p.prevY=p.y;
  const wasAir=!p.on;
  if(p.state===3)p.vx=p.diveDir*DIVE_X;
  p.x+=p.vx;p.y+=p.vy;
@@ -158,57 +164,77 @@ function upP(p){
  let lo=p.s?(216+32)*SX:32*SX,hi=p.s?(432-32)*SX:(216-32)*SX;p.x=Math.max(lo,Math.min(hi,p.x));
 }
 function burst(x,y,col){for(let i=0;i<22;i++){let a=Math.random()*Math.PI*2,s=2+Math.random()*8;fx.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,l:24,c:col})}}
-function hit(p,idx){
-  const px=p.x, py=(p.y+p.h/2);
-  const dx=B.x-px, dy=B.y-py;
-  const halfX=32*SX, halfY=32*SY;
-  const touching=Math.abs(dx)<=halfX && Math.abs(dy)<=halfY;
-  if(!touching){p.hitLatch=false;return}
-  if(p.hitLatch)return;
-  p.hitLatch=true;
-
-  // Original collision response, scaled from 432x304 logical coordinates.
-  if(B.x<px) B.vx=-Math.trunc(Math.abs(B.x-px)/(3*SX))*SX;
-  else if(B.x>px) B.vx=Math.trunc(Math.abs(B.x-px)/(3*SX))*SX;
-  if(Math.abs(B.vx)<0.001) B.vx=([ -1,0,1 ][Math.floor(Math.random()*3)])*SX;
-
-  const ay=Math.abs(B.vy);
-  B.vy=-Math.max(15*SY,ay);
-  B.pow=0;
-
-  if(p.state===2){
-    const a=p.attackInput||{x:0,y:0};
-    B.vx=(B.x<NX?1:-1)*(Math.abs(a.x)+1)*10*SX;
-    B.vy=Math.abs(B.vy)*a.y*2;
-    B.pow=24;shake=10;burst(B.x,B.y,p.s?'#ff573d':'#62d8ff');
-  }
+// Segment/AABB intersection, in tick fractions. Existing logical hit boxes are retained.
+function sweepBox(x,y,dx,dy,left,top,right,bottom){
+ let enter=-Infinity,leave=Infinity,nx=0,ny=0;
+ for(const [pos,delta,lo,hi,ax,ay] of [[x,dx,left,right,1,0],[y,dy,top,bottom,0,1]]){
+   if(Math.abs(delta)<1e-12){if(pos<lo||pos>hi)return null;continue}
+   let a=(lo-pos)/delta,b=(hi-pos)/delta,normal=-Math.sign(delta);
+   if(a>b)[a,b]=[b,a];
+   if(a>=enter){enter=a;nx=ax*normal;ny=ay*normal}leave=Math.min(leave,b);
+ }
+ if(enter>leave||leave<0||enter>1)return null;
+ return{t:Math.max(0,enter),nx,ny};
+}
+function hit(p,idx,px=p.x){
+ // Preserve v5.0 normal bounce and spike speeds exactly.
+ if(B.x<px)B.vx=-Math.trunc(Math.abs(B.x-px)/(3*SX))*SX;
+ else if(B.x>px)B.vx=Math.trunc(Math.abs(B.x-px)/(3*SX))*SX;
+ if(Math.abs(B.vx)<.001)B.vx=([-1,0,1][Math.floor(Math.random()*3)])*SX;
+ B.vy=-Math.max(NORMAL_BOUNCE,Math.abs(B.vy));B.pow=0;B.lastHit=idx;
+ if(p.state===2){
+   Object.assign(B,spikeVelocity(B,p.attackInput||{x:0,y:0}));
+   B.pow=24;shake=10;burst(B.x,B.y,p.s?'#ff573d':'#62d8ff');
+ }
+}
+function advanceBall(b,players=null){
+ const left=20*SX,right=432*SX,netLeft=NX-25*SX,netRight=NX+25*SX,netTop=176*SY,floor=252*SY,eps=1e-6;
+ // Recover an existing overlap once, without reflecting an outgoing velocity.
+ b.x=Math.max(left,Math.min(right,b.x));b.y=Math.max(0,b.y);
+ if(b.x>netLeft&&b.x<netRight&&b.y>netTop){
+   if(b.y<=192*SY){b.y=netTop-eps;if(b.vy>0)b.vy=-b.vy}
+   else if(b.x<NX){b.x=netLeft-eps;b.vx=-Math.abs(b.vx)}
+   else{b.x=netRight+eps;b.vx=Math.abs(b.vx)}
+ }
+ let elapsed=0,gravityApplied=false;
+ for(let contacts=0;contacts<12&&elapsed<1-eps;contacts++){
+   const remaining=1-elapsed,dx=b.vx*.94*remaining,dy=b.vy*remaining;
+   let event=null;
+   function offer(t,kind,nx=0,ny=0,index=-1){if(t>=0&&t<=1&&(!event||t<event.t))event={t,kind,nx,ny,index}}
+   if(dx<0)offer((left-b.x)/dx,'wall',1);else if(dx>0)offer((right-b.x)/dx,'wall',-1);
+   if(dy<0)offer(-b.y/dy,'ceiling',0,1);else if(dy>0)offer(Math.max(0,(floor-b.y)/dy),'floor');
+   const net=sweepBox(b.x,b.y,dx,dy,netLeft,netTop,netRight,G+H);
+   if(net&&(dx*net.nx+dy*net.ny)<0)offer(net.t,'net',net.nx,net.ny);
+   if(players)players.forEach((p,index)=>{
+     if(p.hitLatch)return;
+     const startX=p.prevX??p.x,startY=p.prevY??p.y,mx=p.x-startX,my=p.y-startY;
+     const px=startX+mx*elapsed,py=startY+my*elapsed+p.h/2;
+     const contact=sweepBox(b.x-px,b.y-py,dx-mx*remaining,dy-my*remaining,-32*SX,-32*SY,32*SX,32*SY);
+     if(contact)offer(contact.t,'player',0,0,index);
+   });
+   if(!event){b.x+=dx;b.y+=dy;elapsed=1;break}
+   b.x+=dx*event.t;b.y+=dy*event.t;elapsed+=remaining*event.t;
+   if(event.kind==='floor'){b.y=floor;return true}
+   if(event.kind==='player'){
+     const p=players[event.index];p.hitLatch=true;
+     if(!gravityApplied){b.vy+=GRAV;gravityApplied=true}
+     hit(p,event.index,(p.prevX??p.x)+(p.x-(p.prevX??p.x))*elapsed);
+   }else{
+     if(event.kind==='ceiling')b.vy=1*SY;
+     else if(event.nx)b.vx=-b.vx;else b.vy=-b.vy;
+     b.x+=event.nx*eps;b.y+=event.ny*eps;
+   }
+ }
+ if(!gravityApplied)b.vy+=GRAV;
+ if(players)players.forEach(p=>{if(Math.abs(b.x-p.x)>32*SX||Math.abs(b.y-(p.y+p.h/2))>32*SY)p.hitLatch=false});
+ return false;
 }
 function upB(){
-  if(B.pow){trail.push({x:B.x,y:B.y,l:13});if(trail.length>15)trail.shift();B.pow--}
-  B.spin+=B.vx*.014;
-
-  const futureX=B.x+B.vx;
-  // Classic asymmetrical world rule: logical x < 20 or x > 432.
-  if(futureX<20*SX || futureX>432*SX)B.vx=-B.vx;
-
-  let futureY=B.y+B.vy;
-  if(futureY<0)B.vy=1*SY;
-
-  // Classic net: |x-216| < 25, y > 176; top section ends at 192.
-  if(Math.abs(B.x-NX)<25*SX && B.y>176*SY){
-    if(B.y<=192*SY){if(B.vy>0)B.vy=-B.vy}
-    else B.vx=B.x<NX?-Math.abs(B.vx):Math.abs(B.vx);
-  }
-
-  futureY=B.y+B.vy;
-  if(futureY>252*SY){
-    B.vy=-B.vy;B.y=252*SY;
-    point(B.x<NX?1:0);return;
-  }
-
-  B.y=futureY;B.x+=B.vx*0.94;B.vy+=GRAV;
-  hit(P[0],0);hit(P[1],1);
+ if(B.pow){trail.push({x:B.x,y:B.y,l:13});if(trail.length>15)trail.shift();B.pow--}
+ B.spin+=B.vx*.014;
+ if(advanceBall(B,P))point(B.x<NX?1:0);
 }
+
 function char(p){
  let state='idle';if(p.state===3)state='air';else if(p.state===2)state='spike';else if(!p.on&&p.vy<-1.5)state='jump';else if(!p.on)state='air';else if(Math.abs(p.vx)>1)state='run';
  let key=(p.s?'p2_':'p1_')+state;if(p.s&&(state==='jump'||state==='air'||state==='spike'))key=(Math.abs(p.vx)>1?'p2_run':'p2_idle');const im=spriteImg[key];
@@ -216,7 +242,7 @@ function char(p){
  if(im&&im.complete&&im.naturalWidth){const dw=p.state===3?154:132,dh=p.state===3?138:174;if(p.state===4)g.scale(1.16,.82);g.drawImage(im,-dw/2,-dh/2-10,dw,dh)}else{g.fillStyle=p.s?'#242630':'#f4fbff';g.strokeStyle=p.s?'#ff573d':'#55cfff';g.lineWidth=6;g.beginPath();g.ellipse(0,0,38,42,0,0,Math.PI*2);g.fill();g.stroke()}g.restore();
 }
 function ball(){g.save();g.translate(B.x,B.y);g.rotate(B.spin);if(B.pow){g.shadowBlur=26;g.shadowColor='#ff7a18'}else{g.shadowBlur=10;g.shadowColor='#fff0a0'}const rg=g.createRadialGradient(-9,-11,3,0,0,B.r+5);rg.addColorStop(0,'#fff');rg.addColorStop(.62,'#f8fbff');rg.addColorStop(1,'#dce8f2');g.fillStyle=rg;g.strokeStyle='#324b67';g.lineWidth=3.5;g.beginPath();g.arc(0,0,B.r,0,Math.PI*2);g.fill();g.stroke();g.strokeStyle='#ef5549';g.lineWidth=5;g.beginPath();g.arc(-5,0,B.r*.78,-1.25,.75);g.stroke();g.strokeStyle='#278bd6';g.beginPath();g.arc(5,0,B.r*.78,1.9,3.9);g.stroke();g.strokeStyle='#f3b62f';g.lineWidth=4;g.beginPath();g.arc(0,3,B.r*.63,.15,1.75);g.stroke();g.restore()}
-function draw(){g.save();if(shake){g.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);shake*=.72}let sky=g.createLinearGradient(0,0,0,H);sky.addColorStop(0,'#087ee8');sky.addColorStop(.48,'#71d6f5');sky.addColorStop(.58,'#22b7d7');sky.addColorStop(.70,'#64d7df');sky.addColorStop(.71,'#f5d894');sky.addColorStop(1,'#dba458');g.fillStyle=sky;g.fillRect(-20,-20,W+40,H+40);
+function draw(){g.save();if(shake&&gamePauseOwner===null&&over!==true){g.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);}let sky=g.createLinearGradient(0,0,0,H);sky.addColorStop(0,'#087ee8');sky.addColorStop(.48,'#71d6f5');sky.addColorStop(.58,'#22b7d7');sky.addColorStop(.70,'#64d7df');sky.addColorStop(.71,'#f5d894');sky.addColorStop(1,'#dba458');g.fillStyle=sky;g.fillRect(-20,-20,W+40,H+40);
 const beachT=performance.now()/1000;
 let sun=g.createRadialGradient(W*.80,H*.16,8,W*.80,H*.16,115);sun.addColorStop(0,'rgba(255,250,190,.95)');sun.addColorStop(.22,'rgba(255,230,135,.55)');sun.addColorStop(1,'rgba(255,230,135,0)');g.fillStyle=sun;g.fillRect(W*.65,0,W*.3,H*.35);
 g.fillStyle='#fff';for(let i=0;i<5;i++){g.globalAlpha=.68;g.beginPath();g.ellipse(80+i*245,125+(i%2)*36,66,18,0,0,7);g.ellipse(118+i*245,119+(i%2)*36,40,25,0,0,7);g.fill()}g.globalAlpha=1;
@@ -231,35 +257,57 @@ g.save();g.strokeStyle='rgba(24,72,82,.48)';g.lineWidth=2;
 for(let i=0;i<3;i++){let bx=((W*.18+i*120+beachT*7)%(W*.55))+40,by=145+i*18+Math.sin(beachT*.8+i)*4;g.beginPath();g.arc(bx,by,8,Math.PI*1.08,Math.PI*1.88);g.arc(bx+15,by,8,Math.PI*1.12,Math.PI*1.92);g.stroke()}g.restore();
 g.strokeStyle='#fff9';g.lineWidth=5;g.beginPath();g.moveTo(0,G+2);g.lineTo(W,G+2);g.stroke();trail.forEach((t,i)=>{g.fillStyle=`rgba(255,80,55,${.05+i*.035})`;g.beginPath();g.arc(t.x,t.y,14+i*1.25,0,Math.PI*2);g.fill()});g.fillStyle='#243b55';g.fillRect(NX-10,NT,20,G-NT);g.strokeStyle='#eef7ff';g.lineWidth=4;g.strokeRect(NX-7,NT+8,14,130);for(let y=NT+15;y<NT+135;y+=15){g.beginPath();g.moveTo(NX-7,y);g.lineTo(NX+7,y);g.stroke()}char(P[0]);char(P[1]);ball();fx.forEach(z=>{g.globalAlpha=z.l/24;g.fillStyle=z.c;g.beginPath();g.arc(z.x,z.y,4,0,7);g.fill()});g.globalAlpha=1;g.fillStyle='#07182c';g.textAlign='center';g.font='900 54px system-ui';g.fillText(score[0]+'   VS   '+score[1],NX,66);g.font='900 18px system-ui';g.fillStyle='#fff';g.fillText(mode==='ai'?'P1                         COM':'P1                           P2',NX,96);if(goalTimer>0){g.fillStyle='rgba(5,18,35,.28)';g.fillRect(0,0,W,H);g.fillStyle='#fff';g.font='900 34px system-ui';g.fillText('SLOW MOTION',NX,142);g.font='900 22px system-ui';g.fillText(goalWinner===0?'PLAYER 1 POINT!':(mode==='ai'?'COM POINT!':'PLAYER 2 POINT!'),NX,176)}if(over===true){g.fillStyle='#06111ccc';g.fillRect(0,0,W,H);g.fillStyle='#fff';g.font='900 58px system-ui';g.fillText(score[0]>score[1]?'PLAYER 1 WIN!':'PLAYER 2 WIN!',NX,280);g.font='24px system-ui';g.fillText('다시 시작 버튼을 눌러주세요',NX,325)}g.restore()}
 function physicsTick(){
- if(gamePauseOwner!==null)return;
- if(over===true)return;
- if(goalTimer>0){goalTimer--;P.forEach(p=>{p.x+=p.vx*.08;p.y+=p.vy*.08});B.x+=B.vx*.08;B.y+=B.vy*.08;B.spin+=B.vx*.002;if(B.y+B.r>G){B.y=G-B.r;B.vy=-Math.abs(B.vy)*.18}if(goalTimer<=0)finishPoint();return}
+ try{
+ if(!gameScreen.classList.contains('active')||document.hidden||gamePauseOwner!==null||over===true)return;
+ shake*=Math.pow(.72,60/27);
+ if(goalTimer>0){goalTimer--;P.forEach(p=>{
+   const lo=p.s?(216+32)*SX:32*SX,hi=p.s?(432-32)*SX:(216-32)*SX;
+   p.x=Math.max(lo,Math.min(hi,p.x+p.vx*.08));p.y=Math.min(G-p.h,p.y+p.vy*.08);
+ });B.x+=B.vx*.08;B.y+=B.vy*.08;B.spin+=B.vx*.002;if(B.y+B.r>G){B.y=G-B.r;B.vy=-Math.abs(B.vy)*.18}if(goalTimer<=0)finishPoint();return}
  if(pause){pause--;return}
  const i1=readInput('ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter');const i2=mode==='ai'?cpuInput(P[1],P[0]):readInput('KeyA','KeyD','KeyW','KeyS','Space');
  applyInput(P[0],i1);applyInput(P[1],i2);upP(P[0]);upP(P[1]);upB();
  fx.forEach(z=>{z.x+=z.vx;z.y+=z.vy;z.vx*=.94;z.vy*=.94;z.l--});fx=fx.filter(z=>z.l>0);trail=trail.filter(z=>--z.l>0);
+ }finally{clearEdges()}
 }
 let last=performance.now(),acc=0;
-function loop(now){acc+=Math.min(100,now-last);last=now;while(acc>=TICK_MS){physicsTick();acc-=TICK_MS}draw();requestAnimationFrame(loop)}
+function resetClock(){last=performance.now();acc=0}
+function loop(now){
+ const dt=Math.max(0,now-last);last=now;
+ if(document.hidden||!gameScreen.classList.contains('active')||gamePauseOwner!==null)acc=0;
+ else{
+   // Fixed 27 Hz: normal low-frame-rate catch-up does not slow the game.
+   // A stall over one second is a suspension, never an unbounded catch-up.
+   acc+=Math.min(1000,dt);
+   while(acc+1e-7>=TICK_MS){acc-=TICK_MS;physicsTick()}
+ }
+ draw();requestAnimationFrame(loop);
+}
 document.addEventListener('keydown',e=>{
- if(document.activeElement!==c)return;
- if(e.code==='Escape'){e.preventDefault();toggleOwnedPause(currentLocalPauseActor());return}
- if(gamePauseOwner!==null){e.preventDefault();return}
- if(goalTimer>0 && goalSkipArmed && (e.code==='Enter'||e.code==='Space')){
-   e.preventDefault();
-   goalTimer=1;goalSkipArmed=false;
-   goalSkipArmed=false;
+ if(!CONTROL_CODES.has(e.code)&&e.code!=='Escape')return;
+ const fresh=!input.physical.has(e.code)&&!e.repeat;input.physical.add(e.code);
+ if(document.activeElement!==c||!gameScreen.classList.contains('active'))return;
+ e.preventDefault();
+ if(!fresh)return;
+ if(e.code==='Escape'){toggleOwnedPause(currentLocalPauseActor());return}
+ if(gamePauseOwner!==null||over===true)return;
+ if(goalTimer>0){
+   if(goalSkipArmed&&(e.code==='Enter'||e.code==='Space'))finishPoint();
    return;
  }
- if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter','KeyA','KeyD','KeyW','KeyS','Space'].includes(e.code)){
-   e.preventDefault(); held[e.code]=true; keys.add(e.code);
- }
+ input.held.add(e.code);input.pressed.add(e.code);
+ if(e.code==='Enter')input.aim.set(e.code,axis('ArrowLeft','ArrowRight','ArrowUp','ArrowDown'));
+ if(e.code==='Space')input.aim.set(e.code,axis('KeyA','KeyD','KeyW','KeyS'));
 });
 document.addEventListener('keyup',e=>{
- held[e.code]=false; keys.delete(e.code);
- if(goalTimer>0 && !held.Enter && !held.Space) goalSkipArmed=true;
+ input.physical.delete(e.code);
+ if(input.held.delete(e.code))input.released.add(e.code);
 });
-window.addEventListener('blur',()=>{keys.clear();held=Object.create(null)});
+function loseFocus(){clearInput();input.physical.clear();resetClock()}
+window.addEventListener('blur',loseFocus);
+c.addEventListener('blur',()=>{clearInput()});
+document.addEventListener('visibilitychange',loseFocus);
+
 c.addEventListener('pointerdown',()=>c.focus());document.querySelector('#ai').onclick=()=>{mode='ai';reset()};document.querySelector('#pvp').onclick=()=>{mode='pvp';reset()};document.querySelector('#reset').onclick=()=>{gamePauseOwner=null;updatePauseUI();reset()};document.querySelector('#pauseBtn').onclick=()=>{toggleOwnedPause(currentLocalPauseActor());c.focus()};reset();requestAnimationFrame(loop);
 
 </script></body></html>
