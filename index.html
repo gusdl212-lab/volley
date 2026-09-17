@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>KOKO Volley v5.3</title>
+<title>KOKO Volley v5.4</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;background:#07182d;color:#fff;font-family:Pretendard,"Noto Sans KR",system-ui,sans-serif}body{min-height:100vh}button{font:inherit}
 #app{max-width:1420px;margin:auto;padding:14px}.screen{display:none}.screen.active{display:block}
@@ -14,7 +14,7 @@
 .gameTop{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}.gameTop button{padding:10px 14px;border:1px solid #ffffff33;border-radius:11px;background:#142a47;color:#fff;font-weight:900;cursor:pointer}#back{margin-right:auto;background:#263c59}.hint{font-size:13px;opacity:.82}.wrap{position:relative;border-radius:20px;overflow:hidden;background:#178ee8;box-shadow:0 14px 44px #0007;border:2px solid #ffffff22}canvas{display:block;width:100%;height:auto;outline:none}canvas:focus{box-shadow:inset 0 0 0 3px #7be7ff}.note{margin-top:10px;padding:11px 13px;border-radius:12px;background:#0e223c;font-size:13px;opacity:.9}
 @media(max-width:700px){#app{padding:6px}.hero{aspect-ratio:3/4;min-height:680px;background-size:cover;background-position:center top}.menu{width:82%;top:56%}.menu button{min-height:56px;font-size:17px}.subrow button{font-size:12px}}
 
-/* v5.3 beach polish */
+/* v5.4 beach polish */
 #game .wrap{position:relative;overflow:hidden;border-radius:22px}
 #game .wrap:before{
  content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
@@ -43,8 +43,8 @@
 #pauseOverlay span{display:block;margin-top:8px;font-size:14px;opacity:.8}
 
 </style></head><body><main id="app">
-<section id="home" class="screen active"><div class="hero"><div class="menu"><button id="startAI" class="solo">⚡ 1P vs AI</button><button id="start2P" class="local">👥 2P 대전</button><button id="startOnline" class="online">🌐 온라인 대전</button><div class="subrow"><button id="records">▥ 전적 보기</button><button id="skins">♟ 스킨 선택</button></div></div><div id="toast" class="toast"></div><div class="version">v5.3 CLASSIC ENGINE</div></div></section>
-<section id="game" class="screen"><div class="gameTop"><button id="back">← 메인 메뉴</button><button id="ai">1P vs AI</button><button id="pvp">2P 로컬</button><button id="reset">다시 시작</button><button id="pauseBtn">⏸ 일시정지 (ESC)</button><span class="hint">1P: ← → / ↑ / Enter 공격 · 2P: A D / W / Space 공격</span></div><div class="wrap"><canvas id="c" width="1100" height="650" tabindex="0"></canvas><div id="pauseOverlay"><div class="pauseCard"><strong>PAUSED</strong><span id="pauseText">1P가 일시정지했습니다 · 일시정지한 플레이어만 해제할 수 있습니다.</span></div></div></div><div class="note"><b>v5.3 · RELEASE-TO-STOP AIR CONTROL · BALL SPEED -6% · ANIMATED BEACH · SLOW-MO SKIP</b> · 업로드한 그래픽은 유지하고 432×304 원작 물리 좌표를 1100×650 화면에 비례 변환했습니다.</div></section>
+<section id="home" class="screen active"><div class="hero"><div class="menu"><button id="startAI" class="solo">⚡ 1P vs AI</button><button id="start2P" class="local">👥 2P 대전</button><button id="startOnline" class="online">🌐 온라인 대전</button><div class="subrow"><button id="records">▥ 전적 보기</button><button id="skins">♟ 스킨 선택</button></div></div><div id="toast" class="toast"></div><div class="version">v5.4 CLASSIC ENGINE</div></div></section>
+<section id="game" class="screen"><div class="gameTop"><button id="back">← 메인 메뉴</button><button id="ai">1P vs AI</button><button id="pvp">2P 로컬</button><button id="reset">다시 시작</button><button id="pauseBtn">⏸ 일시정지 (ESC)</button><span class="hint">1P: ← → / ↑ / Enter 공격 · 2P: A D / W / Space 공격</span></div><div class="wrap"><canvas id="c" width="1100" height="650" tabindex="0"></canvas><div id="pauseOverlay"><div class="pauseCard"><strong>PAUSED</strong><span id="pauseText">1P가 일시정지했습니다 · 일시정지한 플레이어만 해제할 수 있습니다.</span></div></div></div><div class="note"><b>v5.4 · RELEASE-TO-STOP AIR CONTROL · BALL SPEED -6% · ANIMATED BEACH · SLOW-MO SKIP</b> · 업로드한 그래픽은 유지하고 432×304 원작 물리 좌표를 1100×650 화면에 비례 변환했습니다.</div></section>
 </main><script>
 const home=document.querySelector('#home'),gameScreen=document.querySelector('#game'),toast=document.querySelector('#toast');
 function showGame(kind){gamePauseOwner=null;updatePauseUI();home.classList.remove('active');gameScreen.classList.add('active');setTimeout(()=>{(kind==='ai'?document.querySelector('#ai'):document.querySelector('#pvp')).click();document.querySelector('#c').focus()},50)}
@@ -88,6 +88,9 @@ const spriteImg={}; Object.entries(SPRITES).forEach(([k,v])=>{const im=new Image
 
 const c=document.querySelector('#c'),g=c.getContext('2d'),W=c.width,H=c.height,G=570,NX=W/2,NT=350;
 let mode='ai',score=[0,0],serve=0,pause=24,over=false,trail=[],fx=[],shake=0,goalTimer=0,goalWinner=-1,goalSkipArmed=false;
+const RALLY={PLAYING:'PLAYING',SLOWMO:'GOAL_SLOWMO',WAITING:'WAITING_FOR_NEXT_RALLY',OVER:'MATCH_OVER'};
+let rallyState=RALLY.PLAYING,nextRallyArmed=false;
+function controlsReleased(){return ![...input.physical].some(code=>CONTROL_CODES.has(code))}
 const TICK_MS=1000/27; // 클래식 게임처럼 물리 속도를 모니터 주사율과 분리
 const SX=W/432, SY=G/276; const MOVE=6*SX,JUMP=-16*SY,GRAV=1*SY,DIVE_X=8*SX,DIVE_Y=-5*SY,NORMAL_BOUNCE=15*SY;
 // Physical keys survive a reset until keyup; held/edges never leak into a new state.
@@ -127,9 +130,15 @@ function mk(x,s){return{x,y:G-86,vx:0,vy:0,w:82,h:86,s,on:1,face:s?-1:1,state:0,
 let P=[mk(36*SX,0),mk(396*SX,1)];
 function mb(){return{x:serve?396*SX:36*SX,y:60*SY,vx:0,vy:1*SY,r:20*SY,pow:0,spin:0,lastHit:-1}}
 let B=mb();
-function reset(all=true){clearInput();gamePauseOwner=null;updatePauseUI();if(all){score=[0,0];serve=0;over=false}P=[mk(36*SX,0),mk(396*SX,1)];B=mb();pause=24;goalTimer=0;goalSkipArmed=false;goalWinner=-1;trail=[];fx=[];c.focus()}
-function point(w){if(goalTimer>0)return;score[w]++;serve=w;goalWinner=w;goalTimer=81;clearInput();goalSkipArmed=true;B.y=G-B.r;B.vy=-Math.max(1.2,Math.abs(B.vy)*.12);B.vx*=.12;shake=4;burst(B.x,B.y,w?'#ff694d':'#7ee8ff');if(score[w]>=15&&Math.abs(score[0]-score[1])>=2)over='pending'}
-function finishPoint(){clearInput();const ended=over==='pending';goalTimer=0;goalSkipArmed=false;goalWinner=-1;if(ended){over=true;return}reset(false)}
+function reset(all=true){rallyState=RALLY.PLAYING;nextRallyArmed=false;clearInput();gamePauseOwner=null;updatePauseUI();if(all){score=[0,0];serve=0;over=false}P=[mk(36*SX,0),mk(396*SX,1)];B=mb();pause=24;goalTimer=0;goalSkipArmed=false;goalWinner=-1;trail=[];fx=[];c.focus()}
+function point(w){if(rallyState!==RALLY.PLAYING||over===true)return;rallyState=RALLY.SLOWMO;nextRallyArmed=false;score[w]++;serve=w;goalWinner=w;goalTimer=81;clearInput();goalSkipArmed=true;B.y=G-B.r;B.vy=-Math.max(1.2,Math.abs(B.vy)*.12);B.vx*=.12;shake=4;burst(B.x,B.y,w?'#ff694d':'#7ee8ff');if(score[w]>=15&&Math.abs(score[0]-score[1])>=2)over='pending'}
+function finishPoint(){
+ clearInput();const ended=over==='pending';goalTimer=0;goalSkipArmed=false;
+ if(ended){over=true;rallyState=RALLY.OVER;nextRallyArmed=false;return}
+ // Preserve the point result. No timers, AI, or physics can start a new rally.
+ rallyState=RALLY.WAITING;nextRallyArmed=controlsReleased();
+}
+function startNextRally(){reset(false);pause=0;resetClock()}
 function readInput(L,R,U,D,A){return{...axis(L,R,U,D),jump:input.pressed.has(U),hit:input.pressed.has(A),aim:input.aim.get(A)}}
 function applyInput(p,inp){
  if(p.lieTicks>0){p.vx=0;p.lieTicks--;if(p.lieTicks===0)p.state=0;return}
@@ -288,10 +297,10 @@ g.save();g.globalAlpha=.20;g.strokeStyle='#fff';g.lineWidth=2;
 for(let i=0;i<7;i++){let gx=((i*181+beachT*25)%(W+80))-40,gy=410+(i%2)*15;g.beginPath();g.moveTo(gx,gy);g.lineTo(gx+38+Math.sin(beachT+i)*8,gy);g.stroke()}g.restore();
 g.save();g.strokeStyle='rgba(24,72,82,.48)';g.lineWidth=2;
 for(let i=0;i<3;i++){let bx=((W*.18+i*120+beachT*7)%(W*.55))+40,by=145+i*18+Math.sin(beachT*.8+i)*4;g.beginPath();g.arc(bx,by,8,Math.PI*1.08,Math.PI*1.88);g.arc(bx+15,by,8,Math.PI*1.12,Math.PI*1.92);g.stroke()}g.restore();
-g.strokeStyle='#fff9';g.lineWidth=5;g.beginPath();g.moveTo(0,G+2);g.lineTo(W,G+2);g.stroke();trail.forEach((t,i)=>{g.fillStyle=`rgba(255,80,55,${.05+i*.035})`;g.beginPath();g.arc(t.x,t.y,14+i*1.25,0,Math.PI*2);g.fill()});g.fillStyle='#243b55';g.fillRect(NX-10,NT,20,G-NT);g.strokeStyle='#eef7ff';g.lineWidth=4;g.strokeRect(NX-7,NT+8,14,130);for(let y=NT+15;y<NT+135;y+=15){g.beginPath();g.moveTo(NX-7,y);g.lineTo(NX+7,y);g.stroke()}char(P[0]);char(P[1]);ball();fx.forEach(z=>{g.globalAlpha=z.l/24;g.fillStyle=z.c;g.beginPath();g.arc(z.x,z.y,4,0,7);g.fill()});g.globalAlpha=1;g.fillStyle='#07182c';g.textAlign='center';g.font='900 54px system-ui';g.fillText(score[0]+'   VS   '+score[1],NX,66);g.font='900 18px system-ui';g.fillStyle='#fff';g.fillText(mode==='ai'?'P1                         COM':'P1                           P2',NX,96);if(goalTimer>0){g.fillStyle='rgba(5,18,35,.28)';g.fillRect(0,0,W,H);g.fillStyle='#fff';g.font='900 34px system-ui';g.fillText('SLOW MOTION',NX,142);g.font='900 22px system-ui';g.fillText(goalWinner===0?'PLAYER 1 POINT!':(mode==='ai'?'COM POINT!':'PLAYER 2 POINT!'),NX,176)}if(over===true){g.fillStyle='#06111ccc';g.fillRect(0,0,W,H);g.fillStyle='#fff';g.font='900 58px system-ui';g.fillText(score[0]>score[1]?'PLAYER 1 WIN!':'PLAYER 2 WIN!',NX,280);g.font='24px system-ui';g.fillText('다시 시작 버튼을 눌러주세요',NX,325)}g.restore()}
+g.strokeStyle='#fff9';g.lineWidth=5;g.beginPath();g.moveTo(0,G+2);g.lineTo(W,G+2);g.stroke();trail.forEach((t,i)=>{g.fillStyle=`rgba(255,80,55,${.05+i*.035})`;g.beginPath();g.arc(t.x,t.y,14+i*1.25,0,Math.PI*2);g.fill()});g.fillStyle='#243b55';g.fillRect(NX-10,NT,20,G-NT);g.strokeStyle='#eef7ff';g.lineWidth=4;g.strokeRect(NX-7,NT+8,14,130);for(let y=NT+15;y<NT+135;y+=15){g.beginPath();g.moveTo(NX-7,y);g.lineTo(NX+7,y);g.stroke()}char(P[0]);char(P[1]);ball();fx.forEach(z=>{g.globalAlpha=z.l/24;g.fillStyle=z.c;g.beginPath();g.arc(z.x,z.y,4,0,7);g.fill()});g.globalAlpha=1;g.fillStyle='#07182c';g.textAlign='center';g.font='900 54px system-ui';g.fillText(score[0]+'   VS   '+score[1],NX,66);g.font='900 18px system-ui';g.fillStyle='#fff';g.fillText(mode==='ai'?'P1                         COM':'P1                           P2',NX,96);if(goalTimer>0){g.fillStyle='rgba(5,18,35,.28)';g.fillRect(0,0,W,H);g.fillStyle='#fff';g.font='900 34px system-ui';g.fillText('SLOW MOTION',NX,142);g.font='900 22px system-ui';g.fillText(goalWinner===0?'PLAYER 1 POINT!':(mode==='ai'?'COM POINT!':'PLAYER 2 POINT!'),NX,176)}if(rallyState===RALLY.WAITING){g.fillStyle='rgba(5,18,35,.80)';g.fillRect(NX-225,120,450,72);g.fillStyle='#fff';g.font='700 18px system-ui';g.fillText(goalWinner===0?'PLAYER 1 POINT!':(mode==='ai'?'COM POINT!':'PLAYER 2 POINT!'),NX,146);g.font='600 17px system-ui';g.fillText('아무 조작키나 눌러 다음 랠리 시작',NX,175)}if(over===true){g.fillStyle='#06111ccc';g.fillRect(0,0,W,H);g.fillStyle='#fff';g.font='900 58px system-ui';g.fillText(score[0]>score[1]?'PLAYER 1 WIN!':'PLAYER 2 WIN!',NX,280);g.font='24px system-ui';g.fillText('다시 시작 버튼을 눌러주세요',NX,325)}g.restore()}
 function physicsTick(){
  try{
- if(!gameScreen.classList.contains('active')||document.hidden||gamePauseOwner!==null||over===true)return;
+ if(!gameScreen.classList.contains('active')||document.hidden||gamePauseOwner!==null||over===true||rallyState===RALLY.WAITING)return;
  shake*=Math.pow(.72,60/27);
  if(goalTimer>0){goalTimer--;P.forEach(p=>{
    const lo=p.s?(216+32)*SX:32*SX,hi=p.s?(432-32)*SX:(216-32)*SX;
@@ -318,6 +327,7 @@ function loop(now){
 }
 document.addEventListener('keydown',e=>{
  if(!CONTROL_CODES.has(e.code)&&e.code!=='Escape')return;
+ const wasReleased=controlsReleased();
  const fresh=!input.physical.has(e.code)&&!e.repeat;input.physical.add(e.code);
  if(document.activeElement!==c||!gameScreen.classList.contains('active'))return;
  e.preventDefault();
@@ -328,14 +338,22 @@ document.addEventListener('keydown',e=>{
    if(goalSkipArmed&&(e.code==='Enter'||e.code==='Space'))finishPoint();
    return;
  }
+ if(rallyState===RALLY.WAITING){
+   const canStart=nextRallyArmed&&wasReleased;
+   nextRallyArmed=false;
+   if(canStart)startNextRally();
+   // Consume this edge: starting a rally must not also attack or jump.
+   return;
+ }
  input.held.add(e.code);input.pressed.add(e.code);input.order.set(e.code,++input.serial);
  captureAttack(e.code);
 });
 document.addEventListener('keyup',e=>{
  input.physical.delete(e.code);
+ if(rallyState===RALLY.WAITING&&controlsReleased())nextRallyArmed=true;
  if(input.held.delete(e.code))input.released.add(e.code);
 });
-function loseFocus(){clearInput();input.physical.clear();resetClock()}
+function loseFocus(){clearInput();if(rallyState===RALLY.PLAYING)input.physical.clear();resetClock()}
 window.addEventListener('blur',loseFocus);
 c.addEventListener('blur',()=>{clearInput()});
 document.addEventListener('visibilitychange',loseFocus);
